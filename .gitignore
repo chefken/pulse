@@ -1,9 +1,25 @@
+# Flutter/Dart
 .dart_tool/
+.packages
+.pub/
 build/
-.gradle/
-.idea/
-*.iml
-*.log
+
+# Android
 android/.gradle/
-android/build/
 android/app/build/
+android/build/
+.gradle/
+
+# iOS
+ios/Pods/
+
+# IDE
+.idea/
+.vscode/
+*.iml
+
+# Misc
+*.log
+.DS_Store
+.flutter-plugins
+.flutter-plugins-dependencies
