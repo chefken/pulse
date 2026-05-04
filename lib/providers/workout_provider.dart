@@ -8,7 +8,6 @@ class WorkoutProvider extends ChangeNotifier {
   Map<String, WorkoutLog> _logs = {};
 
   WorkoutLog? logFor(String dateKey) => _logs[dateKey];
-
   WorkoutLog? get todayLog =>
       _logs[PulseDateUtils.formatDateKey(PulseDateUtils.today)];
 
@@ -48,38 +47,30 @@ class WorkoutProvider extends ChangeNotifier {
   Future<void> addExercise(String dateKey, String name) async {
     final log = _logs[dateKey]; if (log == null) return;
     log.exercises.add(WorkoutExercise.create(name));
-    await log.save();
-    notifyListeners();
+    await log.save(); notifyListeners();
   }
 
   Future<void> deleteExercise(String dateKey, String exId) async {
     final log = _logs[dateKey]; if (log == null) return;
     log.exercises.removeWhere((e) => e.id == exId);
-    await log.save();
-    notifyListeners();
+    await log.save(); notifyListeners();
   }
 
-  Future<void> addSet(
-    String dateKey, String exId, {
-    double weight = 0, int reps = 0,
-  }) async {
+  Future<void> addSet(String dateKey, String exId,
+      {double weight = 0, int reps = 0}) async {
     final log = _logs[dateKey]; if (log == null) return;
     final ex  = log.exercises.firstWhere((e) => e.id == exId);
     ex.sets.add(ExerciseSet.create(weight: weight, reps: reps));
-    await log.save();
-    notifyListeners();
+    await log.save(); notifyListeners();
   }
 
-  Future<void> updateSet(
-    String dateKey, String exId, String setId, {
-    required double weight, required int reps,
-  }) async {
+  Future<void> updateSet(String dateKey, String exId, String setId,
+      {required double weight, required int reps}) async {
     final log = _logs[dateKey]; if (log == null) return;
     final ex  = log.exercises.firstWhere((e) => e.id == exId);
     final s   = ex.sets.firstWhere((s) => s.id == setId);
     s.weight  = weight; s.reps = reps;
-    await log.save();
-    notifyListeners();
+    await log.save(); notifyListeners();
   }
 
   Future<void> deleteSet(
@@ -87,14 +78,12 @@ class WorkoutProvider extends ChangeNotifier {
     final log = _logs[dateKey]; if (log == null) return;
     final ex  = log.exercises.firstWhere((e) => e.id == exId);
     ex.sets.removeWhere((s) => s.id == setId);
-    await log.save();
-    notifyListeners();
+    await log.save(); notifyListeners();
   }
 
   Future<void> toggleCompleted(String dateKey) async {
     final log = _logs[dateKey]; if (log == null) return;
     log.completed = !log.completed;
-    await log.save();
-    notifyListeners();
+    await log.save(); notifyListeners();
   }
 }

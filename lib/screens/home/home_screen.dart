@@ -35,7 +35,8 @@ class _HomeScreenState extends State<HomeScreen>
             begin: const Offset(0, 0.055), end: Offset.zero)
         .animate(CurvedAnimation(
             parent: _ctrl,
-            curve: const Interval(0.12, 1.0, curve: Curves.easeOutCubic)));
+            curve: const Interval(0.12, 1.0,
+                curve: Curves.easeOutCubic)));
     _ctrl.forward();
   }
 
@@ -49,10 +50,11 @@ class _HomeScreenState extends State<HomeScreen>
     HapticFeedback.mediumImpact();
     Navigator.of(context).pushReplacement(
       PageRouteBuilder(
-        transitionDuration: const Duration(milliseconds: 700),
+        transitionDuration: const Duration(milliseconds: 650),
         pageBuilder: (_, __, ___) => const PulseShell(),
         transitionsBuilder: (_, anim, __, child) => FadeTransition(
-          opacity: CurvedAnimation(parent: anim, curve: Curves.easeOut),
+          opacity:
+              CurvedAnimation(parent: anim, curve: Curves.easeOut),
           child: child,
         ),
       ),
@@ -68,10 +70,25 @@ class _HomeScreenState extends State<HomeScreen>
         body: Stack(
           fit: StackFit.expand,
           children: [
-            // Background
-            _BgImage(path: _bgPath),
+            // Background image
+            Image.asset(
+              _bgPath,
+              fit: BoxFit.cover,
+              frameBuilder: (ctx, child, frame, wasSync) {
+                if (wasSync || frame != null) return child;
+                return AnimatedOpacity(
+                  opacity: frame == null ? 0.0 : 1.0,
+                  duration: const Duration(milliseconds: 500),
+                  curve: Curves.easeOut,
+                  child: child,
+                );
+              },
+              errorBuilder: (_, __, ___) => Container(
+                color: const Color(0xFF0E0E0E),
+              ),
+            ),
 
-            // Overlay
+            // Overlay gradient — no Positioned
             DecoratedBox(
               decoration: BoxDecoration(
                 gradient: LinearGradient(
@@ -79,8 +96,8 @@ class _HomeScreenState extends State<HomeScreen>
                   end: Alignment.bottomCenter,
                   colors: [
                     Colors.black.withOpacity(0.15),
-                    Colors.black.withOpacity(0.38),
-                    Colors.black.withOpacity(0.75),
+                    Colors.black.withOpacity(0.40),
+                    Colors.black.withOpacity(0.76),
                     Colors.black.withOpacity(0.94),
                     Colors.black,
                   ],
@@ -94,8 +111,10 @@ class _HomeScreenState extends State<HomeScreen>
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
+                  // Wordmark
                   Padding(
-                    padding: const EdgeInsets.fromLTRB(26, 20, 26, 0),
+                    padding:
+                        const EdgeInsets.fromLTRB(26, 20, 26, 0),
                     child: Text(
                       'PULSE',
                       style: GoogleFonts.figtree(
@@ -109,16 +128,19 @@ class _HomeScreenState extends State<HomeScreen>
 
                   const Spacer(),
 
+                  // Bottom content
                   FadeTransition(
                     opacity: _fade,
                     child: SlideTransition(
                       position: _slide,
                       child: Padding(
-                        padding: const EdgeInsets.fromLTRB(26, 0, 26, 52),
+                        padding:
+                            const EdgeInsets.fromLTRB(26, 0, 26, 52),
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           mainAxisSize: MainAxisSize.min,
                           children: [
+                            // Quote
                             Text(
                               _quote,
                               style: GoogleFonts.figtree(
@@ -129,23 +151,33 @@ class _HomeScreenState extends State<HomeScreen>
                                 letterSpacing: -1.0,
                               ),
                             ),
+
                             const SizedBox(height: 18),
+
                             Container(
-                              width: 28, height: 1.5,
+                              width: 28,
+                              height: 1.5,
                               color: Colors.white.withOpacity(0.30),
                             ),
+
                             const SizedBox(height: 15),
+
+                            // Greeting
                             Text(
                               'Welcome back, chef',
                               style: GoogleFonts.cormorantGaramond(
                                 fontSize: 20,
                                 fontStyle: FontStyle.italic,
                                 fontWeight: FontWeight.w500,
-                                color: Colors.white.withOpacity(0.48),
+                                color:
+                                    Colors.white.withOpacity(0.48),
                                 letterSpacing: 0.2,
                               ),
                             ),
+
                             const SizedBox(height: 40),
+
+                            // ENGAGE button
                             _EngageButton(onTap: _engage),
                           ],
                         ),
@@ -156,38 +188,6 @@ class _HomeScreenState extends State<HomeScreen>
               ),
             ),
           ],
-        ),
-      ),
-    );
-  }
-}
-
-class _BgImage extends StatelessWidget {
-  final String path;
-  const _BgImage({required this.path});
-
-  @override
-  Widget build(BuildContext context) {
-    return Image.asset(
-      path,
-      fit: BoxFit.cover,
-      frameBuilder: (ctx, child, frame, wasSync) {
-        if (wasSync || frame != null) return child;
-        return AnimatedOpacity(
-          opacity: frame == null ? 0.0 : 1.0,
-          duration: const Duration(milliseconds: 500),
-          curve: Curves.easeOut,
-          child: child,
-        );
-      },
-      errorBuilder: (_, __, ___) => Container(
-        decoration: const BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
-            colors: [Color(0xFF181818), Color(0xFF080808), Color(0xFF000000)],
-            stops: [0.0, 0.5, 1.0],
-          ),
         ),
       ),
     );
@@ -225,7 +225,10 @@ class _EngageButtonState extends State<_EngageButton>
   }
 
   @override
-  void dispose() { _ctrl.dispose(); super.dispose(); }
+  void dispose() {
+    _ctrl.dispose();
+    super.dispose();
+  }
 
   Future<void> _down(TapDownDetails _) async {
     HapticFeedback.lightImpact();
@@ -251,18 +254,22 @@ class _EngageButtonState extends State<_EngageButton>
           scale: _scale.value,
           alignment: Alignment.centerLeft,
           child: Container(
-            padding: const EdgeInsets.symmetric(horizontal: 28, vertical: 14),
+            padding: const EdgeInsets.symmetric(
+                horizontal: 28, vertical: 14),
             decoration: BoxDecoration(
-              color: Color.lerp(Colors.white, const Color(0xFFDDDDDD), _tint.value),
+              color: Color.lerp(Colors.white,
+                  const Color(0xFFDDDDDD), _tint.value),
               borderRadius: BorderRadius.circular(50),
               boxShadow: [
                 BoxShadow(
-                  color: Colors.black.withOpacity(0.55 * _lift.value),
+                  color: Colors.black
+                      .withOpacity(0.55 * _lift.value),
                   blurRadius: 22 * _lift.value,
                   offset: Offset(0, 8 * _lift.value),
                 ),
                 BoxShadow(
-                  color: Colors.white.withOpacity(0.10 * _lift.value),
+                  color: Colors.white
+                      .withOpacity(0.10 * _lift.value),
                   blurRadius: 14 * _lift.value,
                   offset: const Offset(0, -1),
                 ),
@@ -276,7 +283,8 @@ class _EngageButtonState extends State<_EngageButton>
                   style: GoogleFonts.figtree(
                     fontSize: 12,
                     fontWeight: FontWeight.w800,
-                    color: Colors.black.withOpacity(1.0 - _tint.value * 0.3),
+                    color: Colors.black
+                        .withOpacity(1.0 - _tint.value * 0.3),
                     letterSpacing: 3.8,
                   ),
                 ),

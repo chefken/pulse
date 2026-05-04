@@ -10,7 +10,7 @@ class ThemeProvider extends ChangeNotifier {
   ThemeMode get themeMode => _isDark ? ThemeMode.dark : ThemeMode.light;
 
   Future<void> init() async {
-    _box   = await Hive.openBox('settings');
+    _box    = await Hive.openBox('settings');
     _isDark = _box!.get(_key, defaultValue: true);
     notifyListeners();
   }

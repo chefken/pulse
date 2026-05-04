@@ -26,7 +26,6 @@ class Task extends HiveObject {
   @HiveField(5) DateTime createdAt;
   @HiveField(6) String dateKey;
   @HiveField(7) List<String> skippedDates;
-  // Tracks which dateKeys this habit was completed on
   @HiveField(8) List<String> completedDates;
 
   Task({
@@ -40,7 +39,7 @@ class Task extends HiveObject {
     List<String>? skippedDates,
     List<String>? completedDates,
   })  : createdAt = createdAt ?? DateTime.now(),
-        skippedDates   = skippedDates ?? [],
+        skippedDates = skippedDates ?? [],
         completedDates = completedDates ?? [];
 
   factory Task.create({

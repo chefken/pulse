@@ -18,6 +18,15 @@ class ScoreProvider extends ChangeNotifier {
 
   DayRecord? recordFor(String dateKey) => _records[dateKey];
 
+  List<DayRecord> get last30Days {
+    final cutoff = PulseDateUtils.today.subtract(const Duration(days: 30));
+    return allRecords.where((r) {
+      final d = DateTime.tryParse(r.dateKey);
+      if (d == null) return false;
+      return !d.isBefore(cutoff);
+    }).toList();
+  }
+
   Future<void> init() async {
     if (!Hive.isAdapterRegistered(3))
       Hive.registerAdapter(DayRecordAdapter());
@@ -37,16 +46,14 @@ class ScoreProvider extends ChangeNotifier {
     final key    = PulseDateUtils.formatDateKey(PulseDateUtils.today);
     final score  = total == 0 ? 0.0 : (earned / total).clamp(0.0, 1.0);
     final record = _records[key] ?? DayRecord.create(key);
-
     record
-      ..disciplineScore         = score
-      ..earnedPoints            = earned
-      ..totalPoints             = total
-      ..completedTasks          = completedTasks
-      ..totalTasks              = totalTasks
-      ..completedHabitTitles    = completedHabitTitles
-      ..completedTaskTitles     = completedTaskTitles;
-
+      ..disciplineScore      = score
+      ..earnedPoints         = earned
+      ..totalPoints          = total
+      ..completedTasks       = completedTasks
+      ..totalTasks           = totalTasks
+      ..completedHabitTitles = completedHabitTitles
+      ..completedTaskTitles  = completedTaskTitles;
     await _box!.put(key, record);
     _records[key] = record;
     notifyListeners();
@@ -56,18 +63,10 @@ class ScoreProvider extends ChangeNotifier {
     final key    = PulseDateUtils.formatDateKey(PulseDateUtils.today);
     final record = _records[key] ?? DayRecord.create(key);
     record
-      ..userRating  = rating
-      ..isReviewed  = true;
+      ..userRating = rating
+      ..isReviewed = true;
     await _box!.put(key, record);
     _records[key] = record;
     notifyListeners();
-  }
-
-  List<DayRecord> get last30Days {
-    final cutoff = PulseDateUtils.today.subtract(const Duration(days: 30));
-    return allRecords.where((r) {
-      final d = DateTime.parse(r.dateKey);
-      return !d.isBefore(cutoff);
-    }).toList();
   }
 }

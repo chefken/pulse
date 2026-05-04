@@ -9,48 +9,38 @@ class ExerciseSet extends HiveObject {
   @HiveField(1) double weight;
   @HiveField(2) int    reps;
 
-  ExerciseSet({
-    required this.id,
-    required this.weight,
-    required this.reps,
-  });
+  ExerciseSet({required this.id, required this.weight, required this.reps});
 
   factory ExerciseSet.create({double weight = 0, int reps = 0}) =>
       ExerciseSet(id: const Uuid().v4(), weight: weight, reps: reps);
 
   String get display =>
-      '${weight % 1 == 0 ? weight.toInt() : weight}kg × $reps';
+      '${weight % 1 == 0 ? weight.toInt() : weight}kg x $reps';
 }
 
 @HiveType(typeId: 8)
 class WorkoutExercise extends HiveObject {
-  @HiveField(0) String           id;
-  @HiveField(1) String           name;
+  @HiveField(0) String id;
+  @HiveField(1) String name;
   @HiveField(2) List<ExerciseSet> sets;
 
-  WorkoutExercise({
-    required this.id,
-    required this.name,
-    required this.sets,
-  });
+  WorkoutExercise({required this.id, required this.name, required this.sets});
 
   factory WorkoutExercise.create(String name) =>
       WorkoutExercise(id: const Uuid().v4(), name: name, sets: []);
 
   double get maxWeight =>
-      sets.isEmpty
-          ? 0
-          : sets.map((s) => s.weight).reduce((a, b) => a > b ? a : b);
+      sets.isEmpty ? 0 : sets.map((s) => s.weight).reduce((a, b) => a > b ? a : b);
 }
 
 @HiveType(typeId: 9)
 class WorkoutLog extends HiveObject {
-  @HiveField(0) String               id;
-  @HiveField(1) String               dateKey;
-  @HiveField(2) String               muscleGroup;
+  @HiveField(0) String id;
+  @HiveField(1) String dateKey;
+  @HiveField(2) String muscleGroup;
   @HiveField(3) List<WorkoutExercise> exercises;
-  @HiveField(4) bool                 completed;
-  @HiveField(5) DateTime             createdAt;
+  @HiveField(4) bool   completed;
+  @HiveField(5) DateTime createdAt;
 
   WorkoutLog({
     required this.id,

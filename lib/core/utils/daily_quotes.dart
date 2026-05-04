@@ -16,24 +16,24 @@ class Quotes {
     'Do the work\nno one sees.',
     'Outwork\nyesterday.',
     'Make today\ncount.',
-    'Train your\nmind first.',
     'Stay the\ncourse.',
     'Focus over\nfeelings.',
     'No zero\ndays.',
     'Own the\nday.',
-    'Execute\nmercilessly.',
     'Raise your\nstandards.',
     'Show up\nsharp.',
-    'The streak\nmatters.',
     'Hard days\nbuild you.',
     'One decision\nat a time.',
     'Be the\nexception.',
-    'Control what\nyou can.',
     'Never\nskip twice.',
     'Prove it\nto yourself.',
     'Silence\nthe noise.',
     'Move with\npurpose.',
     'Built, not\nborn.',
+    'Train your\nmind first.',
+    'Execute\nmercilessly.',
+    'Control what\nyou can.',
+    'The streak\nmatters.',
   ];
 
   static const _images = [
@@ -49,8 +49,5 @@ class Quotes {
 
   static String random() => _list[Random().nextInt(_list.length)];
 
-  static String randomBg() {
-    final r = Random().nextInt(_images.length);
-    return _images[r];
-  }
+  static String randomBg() => _images[Random().nextInt(_images.length)];
 }

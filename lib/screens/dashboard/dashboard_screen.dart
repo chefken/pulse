@@ -67,16 +67,17 @@ class _DashboardScreenState extends State<DashboardScreen> {
     final streak = context.watch<StreakProvider>();
     final isDark = context.watch<ThemeProvider>().isDark;
 
-    final bg        = AppColors.bg(context);
-    final surface   = AppColors.surface(context);
-    final border    = AppColors.border(context);
-    final primary   = AppColors.textPrimary(context);
-    final muted     = AppColors.textMuted(context);
-    final surfHigh  = AppColors.surfaceHigh(context);
+    final bg       = AppColors.bg(context);
+    final surface  = AppColors.surface(context);
+    final border   = AppColors.border(context);
+    final primary  = AppColors.textPrimary(context);
+    final muted    = AppColors.textMuted(context);
+    final surfHigh = AppColors.surfaceHigh(context);
 
     final today     = tasks.todayTasks;
     final habits    = today.where((t) => t.type == TaskType.habit).toList();
-    final oneTimers = today.where((t) => t.type == TaskType.oneTime).toList();
+    final oneTimers =
+        today.where((t) => t.type == TaskType.oneTime).toList();
     final completed = tasks.completedToday.length;
     final total     = today.length;
 
@@ -89,7 +90,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
               parent: AlwaysScrollableScrollPhysics()),
           slivers: [
 
-            // ── Header ──────────────────────────────────────
+            // Header
             SliverToBoxAdapter(
               child: Padding(
                 padding: const EdgeInsets.fromLTRB(24, 20, 24, 0),
@@ -122,7 +123,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
                         ],
                       ),
                     ),
-
                     // Streak
                     Container(
                       padding: const EdgeInsets.symmetric(
@@ -149,17 +149,14 @@ class _DashboardScreenState extends State<DashboardScreen> {
                         ],
                       ),
                     ),
-
                     const SizedBox(width: 10),
-
-                    // Theme toggle
                     _ThemeToggle(isDark: isDark),
                   ],
                 ),
               ),
             ),
 
-            // ── Discipline ring ──────────────────────────────
+            // Discipline ring
             SliverToBoxAdapter(
               child: Padding(
                 padding: const EdgeInsets.fromLTRB(24, 24, 24, 0),
@@ -168,12 +165,12 @@ class _DashboardScreenState extends State<DashboardScreen> {
                   completed: completed,
                   total: total,
                   earnedPoints: tasks.earnedPoints,
-                  totalPoints: tasks.totalPoints,
+                  totalPoints:  tasks.totalPoints,
                 ),
               ),
             ),
 
-            // ── Week tracker ─────────────────────────────────
+            // Week tracker
             SliverToBoxAdapter(
               child: Padding(
                 padding: const EdgeInsets.fromLTRB(24, 16, 24, 0),
@@ -183,7 +180,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
             const SliverToBoxAdapter(child: SizedBox(height: 30)),
 
-            // ── Habits ───────────────────────────────────────
+            // Habits section
             SliverToBoxAdapter(
               child: Padding(
                 padding: const EdgeInsets.fromLTRB(24, 0, 24, 12),
@@ -196,7 +193,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 ),
               ),
             ),
-
             habits.isEmpty
                 ? SliverToBoxAdapter(
                     child: _EmptyHint(
@@ -237,7 +233,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
             const SliverToBoxAdapter(child: SizedBox(height: 28)),
 
-            // ── Today tasks ──────────────────────────────────
+            // Today tasks
             SliverToBoxAdapter(
               child: Padding(
                 padding: const EdgeInsets.fromLTRB(24, 0, 24, 12),
@@ -250,7 +246,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 ),
               ),
             ),
-
             oneTimers.isEmpty
                 ? SliverToBoxAdapter(
                     child: _EmptyHint(
@@ -283,7 +278,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                     ),
                   ),
 
-            // Bottom padding for floating nav
+            // Space for floating nav
             const SliverToBoxAdapter(child: SizedBox(height: 110)),
           ],
         ),
@@ -319,15 +314,19 @@ class _ThemeToggle extends StatelessWidget {
         child: AnimatedAlign(
           duration: const Duration(milliseconds: 280),
           curve: Curves.easeInOutCubic,
-          alignment: isDark ? Alignment.centerRight : Alignment.centerLeft,
+          alignment: isDark
+              ? Alignment.centerRight
+              : Alignment.centerLeft,
           child: Padding(
             padding: const EdgeInsets.all(3),
             child: Container(
               width: 16, height: 16,
-              decoration:
-                  BoxDecoration(color: primary, shape: BoxShape.circle),
+              decoration: BoxDecoration(
+                  color: primary, shape: BoxShape.circle),
               child: Icon(
-                isDark ? Icons.dark_mode_rounded : Icons.light_mode_rounded,
+                isDark
+                    ? Icons.dark_mode_rounded
+                    : Icons.light_mode_rounded,
                 size: 9,
                 color: bg,
               ),
@@ -354,17 +353,16 @@ class _SectionLabel extends StatelessWidget {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
-        Text(
-          title,
-          style: GoogleFonts.dmSans(
-            fontSize: 12, fontWeight: FontWeight.w600,
-            color: muted, letterSpacing: 0.6,
-          ),
-        ),
+        Text(title,
+            style: GoogleFonts.dmSans(
+              fontSize: 12, fontWeight: FontWeight.w600,
+              color: muted, letterSpacing: 0.6,
+            )),
         GestureDetector(
           onTap: onAdd,
           child: Container(
-            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+            padding: const EdgeInsets.symmetric(
+                horizontal: 10, vertical: 5),
             decoration: BoxDecoration(
               color: primary,
               borderRadius: BorderRadius.circular(20),
@@ -374,9 +372,12 @@ class _SectionLabel extends StatelessWidget {
               children: [
                 Icon(Icons.add_rounded, size: 13, color: bg),
                 const SizedBox(width: 3),
-                Text('Add', style: GoogleFonts.dmSans(
-                  fontSize: 11, fontWeight: FontWeight.w600, color: bg,
-                )),
+                Text('Add',
+                    style: GoogleFonts.dmSans(
+                      fontSize: 11,
+                      fontWeight: FontWeight.w600,
+                      color: bg,
+                    )),
               ],
             ),
           ),
@@ -407,9 +408,10 @@ class _EmptyHint extends StatelessWidget {
           border: Border.all(color: border, width: 0.5),
         ),
         child: Center(
-          child: Text(text, style: GoogleFonts.dmSans(
-            fontSize: 13, color: muted,
-          )),
+          child: Text(text,
+              style: GoogleFonts.dmSans(
+                fontSize: 13, color: muted,
+              )),
         ),
       ),
     );

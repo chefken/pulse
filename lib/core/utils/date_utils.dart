@@ -29,10 +29,4 @@ class PulseDateUtils {
     if (h < 17) return 'Good afternoon.';
     return 'Good evening.';
   }
-
-  /// Monday of the current week (Mon=1)
-  static DateTime mondayOfCurrentWeek() {
-    final t = today;
-    return t.subtract(Duration(days: t.weekday - 1));
-  }
 }

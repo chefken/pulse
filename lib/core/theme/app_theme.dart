@@ -14,18 +14,17 @@ class AppTheme {
     final surface = isDark ? AppColors.darkSurface     : AppColors.lightSurface;
     final border  = isDark ? AppColors.darkBorder      : AppColors.lightBorder;
     final primary = isDark ? AppColors.darkTextPrimary : AppColors.lightTextPrimary;
-    final second  = isDark ? AppColors.darkTextSecondary:AppColors.lightTextSecondary;
-    final muted   = isDark ? AppColors.darkTextMuted   : AppColors.lightTextMuted;
-    final br      = isDark ? Brightness.dark           : Brightness.light;
+    final second  = isDark ? AppColors.darkTextSecondary : AppColors.lightTextSecondary;
+    final br      = isDark ? Brightness.dark : Brightness.light;
 
     return ThemeData(
       brightness: br,
       scaffoldBackgroundColor: bg,
       colorScheme: ColorScheme(
         brightness: br,
-        primary: primary,    onPrimary: bg,
-        secondary: second,   onSecondary: bg,
-        surface: surface,    onSurface: primary,
+        primary: primary,   onPrimary: bg,
+        secondary: second,  onSecondary: bg,
+        surface: surface,   onSurface: primary,
         error: AppColors.danger, onError: Colors.white,
       ),
       textTheme: GoogleFonts.dmSansTextTheme(
@@ -41,7 +40,6 @@ class AppTheme {
             .copyWith(
           statusBarColor: Colors.transparent,
           systemNavigationBarColor: Colors.transparent,
-          systemNavigationBarDividerColor: Colors.transparent,
         ),
       ),
       cardTheme: CardThemeData(

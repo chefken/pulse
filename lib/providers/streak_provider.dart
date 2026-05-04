@@ -26,7 +26,6 @@ class StreakProvider extends ChangeNotifier {
       ..sort((a, b) => a.dateKey.compareTo(b.dateKey));
     final map = {for (var r in sorted) r.dateKey: r};
 
-    // Current streak (walk back from today)
     int current = 0;
     DateTime cursor = PulseDateUtils.today;
     while (true) {
@@ -43,8 +42,7 @@ class StreakProvider extends ChangeNotifier {
     int longest = 0, temp = 0, active = 0;
     for (final r in sorted) {
       if (r.isGoodDay) {
-        active++;
-        temp++;
+        active++; temp++;
         if (temp > longest) longest = temp;
       } else {
         temp = 0;
@@ -54,8 +52,7 @@ class StreakProvider extends ChangeNotifier {
     _data
       ..currentStreak   = current
       ..longestStreak   = longest > _data.longestStreak
-          ? longest
-          : _data.longestStreak
+          ? longest : _data.longestStreak
       ..totalActiveDays = active
       ..totalDays       = sorted.length;
 

@@ -15,12 +15,15 @@ class AddTaskSheet extends StatefulWidget {
 }
 
 class _AddTaskSheetState extends State<AddTaskSheet> {
-  final _ctrl = TextEditingController();
+  final _ctrl    = TextEditingController();
   TaskPriority _priority = TaskPriority.medium;
   TaskType     _type     = TaskType.oneTime;
 
   @override
-  void dispose() { _ctrl.dispose(); super.dispose(); }
+  void dispose() {
+    _ctrl.dispose();
+    super.dispose();
+  }
 
   void _submit() {
     final title = _ctrl.text.trim();
@@ -47,7 +50,8 @@ class _AddTaskSheetState extends State<AddTaskSheet> {
     return Container(
       decoration: BoxDecoration(
         color: bg,
-        borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
+        borderRadius:
+            const BorderRadius.vertical(top: Radius.circular(28)),
         border: Border(top: BorderSide(color: border, width: 0.5)),
       ),
       padding: EdgeInsets.fromLTRB(24, 20, 24, bottom + 28),
@@ -58,16 +62,17 @@ class _AddTaskSheetState extends State<AddTaskSheet> {
           Center(child: Container(
             width: 32, height: 3,
             decoration: BoxDecoration(
-              color: border, borderRadius: BorderRadius.circular(2),
-            ),
+                color: border,
+                borderRadius: BorderRadius.circular(2)),
           )),
           const SizedBox(height: 22),
-          Text('New task', style: GoogleFonts.dmSans(
-            fontSize: 17, fontWeight: FontWeight.w600, color: primary,
-          )),
+          Text('New task',
+              style: GoogleFonts.dmSans(
+                fontSize: 17, fontWeight: FontWeight.w600,
+                color: primary,
+              )),
           const SizedBox(height: 18),
 
-          // Input
           TextField(
             controller: _ctrl,
             autofocus: true,
@@ -75,7 +80,8 @@ class _AddTaskSheetState extends State<AddTaskSheet> {
             cursorColor: primary,
             decoration: InputDecoration(
               hintText: 'What needs to get done?',
-              hintStyle: GoogleFonts.dmSans(fontSize: 14, color: muted),
+              hintStyle:
+                  GoogleFonts.dmSans(fontSize: 14, color: muted),
               filled: true, fillColor: surfHi,
               border: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(14),
@@ -115,7 +121,8 @@ class _AddTaskSheetState extends State<AddTaskSheet> {
             const SizedBox(width: 8),
             _Chip('Medium', _priority == TaskPriority.medium,
                 primary, muted, surfHi, border,
-                () => setState(() => _priority = TaskPriority.medium)),
+                () => setState(
+                    () => _priority = TaskPriority.medium)),
             const SizedBox(width: 8),
             _Chip('High', _priority == TaskPriority.high,
                 primary, muted, surfHi, border,
@@ -128,7 +135,8 @@ class _AddTaskSheetState extends State<AddTaskSheet> {
             child: GestureDetector(
               onTap: _submit,
               child: Container(
-                padding: const EdgeInsets.symmetric(vertical: 16),
+                padding:
+                    const EdgeInsets.symmetric(vertical: 16),
                 decoration: BoxDecoration(
                   color: primary,
                   borderRadius: BorderRadius.circular(14),
@@ -155,10 +163,10 @@ class _Label extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => Text(text,
-    style: GoogleFonts.dmSans(
-      fontSize: 10, fontWeight: FontWeight.w600,
-      color: muted, letterSpacing: 1.2,
-    ));
+      style: GoogleFonts.dmSans(
+        fontSize: 10, fontWeight: FontWeight.w600,
+        color: muted, letterSpacing: 1.2,
+      ));
 }
 
 class _Chip extends StatelessWidget {
@@ -173,10 +181,14 @@ class _Chip extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
-      onTap: () { HapticFeedback.selectionClick(); onTap(); },
+      onTap: () {
+        HapticFeedback.selectionClick();
+        onTap();
+      },
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 180),
-        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 9),
+        padding: const EdgeInsets.symmetric(
+            horizontal: 14, vertical: 9),
         decoration: BoxDecoration(
           color: selected ? primary.withOpacity(0.10) : surfHigh,
           borderRadius: BorderRadius.circular(10),
@@ -185,11 +197,14 @@ class _Chip extends StatelessWidget {
             width: selected ? 1 : 0.5,
           ),
         ),
-        child: Text(label, style: GoogleFonts.dmSans(
-          fontSize: 13,
-          fontWeight: selected ? FontWeight.w600 : FontWeight.w400,
-          color: selected ? primary : muted,
-        )),
+        child: Text(label,
+            style: GoogleFonts.dmSans(
+              fontSize: 13,
+              fontWeight: selected
+                  ? FontWeight.w600
+                  : FontWeight.w400,
+              color: selected ? primary : muted,
+            )),
       ),
     );
   }

@@ -8,7 +8,7 @@ class DayRecord extends HiveObject {
   @HiveField(0)  String id;
   @HiveField(1)  String dateKey;
   @HiveField(2)  double disciplineScore;
-  @HiveField(3)  int    userRating;       // mood 1–10
+  @HiveField(3)  int    userRating;
   @HiveField(4)  int    totalTasks;
   @HiveField(5)  int    completedTasks;
   @HiveField(6)  int    earnedPoints;
@@ -20,13 +20,13 @@ class DayRecord extends HiveObject {
   DayRecord({
     required this.id,
     required this.dateKey,
-    this.disciplineScore        = 0,
-    this.userRating             = 0,
-    this.totalTasks             = 0,
-    this.completedTasks         = 0,
-    this.earnedPoints           = 0,
-    this.totalPoints            = 0,
-    this.isReviewed             = false,
+    this.disciplineScore     = 0,
+    this.userRating          = 0,
+    this.totalTasks          = 0,
+    this.completedTasks      = 0,
+    this.earnedPoints        = 0,
+    this.totalPoints         = 0,
+    this.isReviewed          = false,
     List<String>? completedHabitTitles,
     List<String>? completedTaskTitles,
   })  : completedHabitTitles = completedHabitTitles ?? [],

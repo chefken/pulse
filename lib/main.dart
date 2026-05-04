@@ -17,17 +17,17 @@ void main() async {
   SystemChrome.setSystemUIOverlayStyle(const SystemUiOverlayStyle(
     statusBarColor: Colors.transparent,
     systemNavigationBarColor: Colors.transparent,
-    systemNavigationBarDividerColor: Colors.transparent,
   ));
+
+  SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
 
   await SystemChrome.setPreferredOrientations(
       [DeviceOrientation.portraitUp]);
 
-  SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
-
   await Hive.initFlutter();
   tz.initializeTimeZones();
 
+  // Init providers sequentially — safe order
   final theme   = ThemeProvider();
   final tasks   = TaskProvider();
   final score   = ScoreProvider();

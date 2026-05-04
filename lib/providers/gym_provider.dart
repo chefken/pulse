@@ -10,8 +10,8 @@ class GymProvider extends ChangeNotifier {
   List<GymDay>             _routine  = [];
   Map<String, GymSession>  _sessions = {};
 
-  List<GymDay>            get routine  => _routine;
-  Map<String, GymSession> get sessions => _sessions;
+  List<GymDay>             get routine  => _routine;
+  Map<String, GymSession>  get sessions => _sessions;
 
   GymDay? get todayPlan {
     final wd = _wd(DateTime.now().weekday);
@@ -21,8 +21,7 @@ class GymProvider extends ChangeNotifier {
 
   bool get todayCompleted =>
       _sessions[PulseDateUtils.formatDateKey(PulseDateUtils.today)]
-          ?.completed ??
-      false;
+          ?.completed ?? false;
 
   bool sessionCompletedOn(DateTime date) =>
       _sessions[PulseDateUtils.formatDateKey(date)]?.completed ?? false;
@@ -47,13 +46,16 @@ class GymProvider extends ChangeNotifier {
       return plan.isRest ? null : PulseDateUtils.formatDateKey(d);
     }).whereType<String>().toList();
     if (days.isEmpty) return 0;
-    final done = days.where((k) => _sessions[k]?.completed ?? false).length;
+    final done =
+        days.where((k) => _sessions[k]?.completed ?? false).length;
     return done / days.length;
   }
 
   Future<void> init() async {
-    if (!Hive.isAdapterRegistered(5)) Hive.registerAdapter(GymDayAdapter());
-    if (!Hive.isAdapterRegistered(6)) Hive.registerAdapter(GymSessionAdapter());
+    if (!Hive.isAdapterRegistered(5))
+      Hive.registerAdapter(GymDayAdapter());
+    if (!Hive.isAdapterRegistered(6))
+      Hive.registerAdapter(GymSessionAdapter());
     _routineBox = await Hive.openBox<GymDay>('gym_routine');
     _sessionBox = await Hive.openBox<GymSession>('gym_sessions');
     if (_routineBox!.isEmpty) _seed();

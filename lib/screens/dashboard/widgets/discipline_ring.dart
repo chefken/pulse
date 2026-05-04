@@ -96,7 +96,8 @@ class _DisciplineRingState extends State<DisciplineRing>
                       CustomPaint(
                         size: const Size(96, 96),
                         painter: _RingPainter(
-                          progress: _progAnim.value * widget.score,
+                          progress:
+                              _progAnim.value * widget.score,
                           color: primary,
                           trackColor: trackC,
                         ),
@@ -123,15 +124,13 @@ class _DisciplineRingState extends State<DisciplineRing>
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
-                  'DISCIPLINE',
-                  style: GoogleFonts.dmSans(
-                    fontSize: 9,
-                    fontWeight: FontWeight.w700,
-                    color: muted,
-                    letterSpacing: 1.8,
-                  ),
-                ),
+                Text('DISCIPLINE',
+                    style: GoogleFonts.dmSans(
+                      fontSize: 9,
+                      fontWeight: FontWeight.w700,
+                      color: muted,
+                      letterSpacing: 1.8,
+                    )),
                 const SizedBox(height: 5),
                 TweenAnimationBuilder<double>(
                   tween: Tween(begin: 0, end: widget.score),
@@ -206,7 +205,6 @@ class _RingPainter extends CustomPainter {
       -math.pi / 2, 2 * math.pi, false,
       p..color = trackColor,
     );
-
     if (progress > 0) {
       canvas.drawArc(
         Rect.fromCircle(center: c, radius: r),

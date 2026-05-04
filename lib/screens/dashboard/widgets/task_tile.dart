@@ -37,7 +37,10 @@ class _TaskTileState extends State<TaskTile>
   }
 
   @override
-  void dispose() { _ctrl.dispose(); super.dispose(); }
+  void dispose() {
+    _ctrl.dispose();
+    super.dispose();
+  }
 
   void _tap() async {
     HapticFeedback.lightImpact();
@@ -63,7 +66,8 @@ class _TaskTileState extends State<TaskTile>
         child: AnimatedContainer(
           duration: const Duration(milliseconds: 220),
           margin: const EdgeInsets.only(bottom: 8),
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 13),
+          padding: const EdgeInsets.symmetric(
+              horizontal: 16, vertical: 13),
           decoration: BoxDecoration(
             color: done ? primary.withOpacity(0.05) : surface,
             borderRadius: BorderRadius.circular(16),
@@ -82,13 +86,14 @@ class _TaskTileState extends State<TaskTile>
                   shape: BoxShape.circle,
                   color: done ? primary : Colors.transparent,
                   border: Border.all(
-                    color: done ? primary : muted.withOpacity(0.45),
+                    color:
+                        done ? primary : muted.withOpacity(0.45),
                     width: 1.2,
                   ),
                 ),
                 child: done
-                    ? Icon(Icons.check_rounded, size: 12,
-                        color: AppColors.bg(context))
+                    ? Icon(Icons.check_rounded,
+                        size: 12, color: AppColors.bg(context))
                     : null,
               ),
 
@@ -114,18 +119,15 @@ class _TaskTileState extends State<TaskTile>
                     ),
                     if (widget.task.type == TaskType.habit) ...[
                       const SizedBox(height: 2),
-                      Text(
-                        'Daily',
-                        style: GoogleFonts.dmSans(
-                          fontSize: 10, color: muted,
-                        ),
-                      ),
+                      Text('Daily',
+                          style: GoogleFonts.dmSans(
+                            fontSize: 10, color: muted,
+                          )),
                     ],
                   ],
                 ),
               ),
 
-              // Skip (habits only)
               if (widget.task.type == TaskType.habit &&
                   widget.onSkip != null)
                 _IconBtn(
@@ -133,7 +135,6 @@ class _TaskTileState extends State<TaskTile>
                   color: muted,
                   onTap: widget.onSkip!,
                 ),
-
               if (widget.onDelete != null)
                 _IconBtn(
                   icon: Icons.close_rounded,
@@ -159,7 +160,10 @@ class _IconBtn extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
-      onTap: () { HapticFeedback.lightImpact(); onTap(); },
+      onTap: () {
+        HapticFeedback.lightImpact();
+        onTap();
+      },
       child: Padding(
         padding: const EdgeInsets.only(left: 10),
         child: Icon(icon, size: 17, color: color),

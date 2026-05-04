@@ -1,3 +1,4 @@
+import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -28,7 +29,7 @@ class PulseApp extends StatelessWidget {
 }
 
 // ─────────────────────────────────────────────────────────────
-// Shell — floating nav bar, edge-to-edge
+// Shell
 // ─────────────────────────────────────────────────────────────
 class PulseShell extends StatefulWidget {
   const PulseShell({super.key});
@@ -37,8 +38,7 @@ class PulseShell extends StatefulWidget {
   State<PulseShell> createState() => _PulseShellState();
 }
 
-class _PulseShellState extends State<PulseShell>
-    with TickerProviderStateMixin {
+class _PulseShellState extends State<PulseShell> {
   int _index = 0;
 
   final _screens = const [
@@ -49,7 +49,8 @@ class _PulseShellState extends State<PulseShell>
 
   @override
   Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final isDark  = Theme.of(context).brightness == Brightness.dark;
+    final bgColor = AppColors.bg(context);
 
     return AnnotatedRegion<SystemUiOverlayStyle>(
       value: (isDark
@@ -60,24 +61,26 @@ class _PulseShellState extends State<PulseShell>
         systemNavigationBarColor: Colors.transparent,
       ),
       child: Scaffold(
-        backgroundColor: AppColors.bg(context),
+        backgroundColor: bgColor,
+        // extendBody lets the body go behind the nav bar
         extendBody: true,
         body: AnimatedSwitcher(
-          duration: const Duration(milliseconds: 300),
-          transitionBuilder: (child, anim) {
-            return FadeTransition(
-              opacity: CurvedAnimation(
-                  parent: anim, curve: Curves.easeOut),
-              child: child,
-            );
-          },
+          duration: const Duration(milliseconds: 260),
+          transitionBuilder: (child, anim) => FadeTransition(
+            opacity: CurvedAnimation(
+                parent: anim, curve: Curves.easeOut),
+            child: child,
+          ),
           child: KeyedSubtree(
             key: ValueKey(_index),
             child: _screens[_index],
           ),
         ),
-        bottomNavigationBar: _FloatingNavBar(
+        // The nav bar is built as Scaffold.bottomNavigationBar
+        // so Flutter handles safe area + elevation correctly
+        bottomNavigationBar: _GlassNavBar(
           current: _index,
+          isDark: isDark,
           onTap: (i) => setState(() => _index = i),
         ),
       ),
@@ -86,13 +89,20 @@ class _PulseShellState extends State<PulseShell>
 }
 
 // ─────────────────────────────────────────────────────────────
-// Floating glassmorphic nav bar
+// Frosted glass nav bar
+// Key fix: NO Stack/Positioned inside. Pure Column/Row only.
+// BackdropFilter wrapped in ClipRRect, no Opacity ancestors.
 // ─────────────────────────────────────────────────────────────
-class _FloatingNavBar extends StatelessWidget {
+class _GlassNavBar extends StatelessWidget {
   final int current;
+  final bool isDark;
   final ValueChanged<int> onTap;
 
-  const _FloatingNavBar({required this.current, required this.onTap});
+  const _GlassNavBar({
+    required this.current,
+    required this.isDark,
+    required this.onTap,
+  });
 
   static const _items = [
     _NavItem(Icons.home_outlined,           Icons.home_rounded,           'Home'),
@@ -102,51 +112,57 @@ class _FloatingNavBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final isDark   = Theme.of(context).brightness == Brightness.dark;
-    final primary  = AppColors.textPrimary(context);
-    final muted    = AppColors.textMuted(context);
-    final surface  = AppColors.surface(context);
+    final primary = AppColors.textPrimary(context);
+    final muted   = AppColors.textMuted(context);
 
+    // Padding + ClipRRect + BackdropFilter
+    // BackdropFilter must be a DIRECT child of ClipRRect
+    // No Opacity, no Stack, no Positioned anywhere in this tree
     return SafeArea(
+      top: false,
+      minimum: const EdgeInsets.only(bottom: 12),
       child: Padding(
-        padding: const EdgeInsets.fromLTRB(24, 0, 24, 16),
-        child: Container(
-          height: 62,
-          decoration: BoxDecoration(
-            color: surface.withOpacity(isDark ? 0.92 : 0.94),
-            borderRadius: BorderRadius.circular(32),
-            border: Border.all(
-              color: primary.withOpacity(isDark ? 0.10 : 0.08),
-              width: 0.5,
-            ),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withOpacity(isDark ? 0.40 : 0.10),
-                blurRadius: 24,
-                spreadRadius: 0,
-                offset: const Offset(0, 8),
-              ),
-              BoxShadow(
-                color: Colors.black.withOpacity(isDark ? 0.20 : 0.05),
-                blurRadius: 6,
-                spreadRadius: 0,
-                offset: const Offset(0, 2),
-              ),
-            ],
-          ),
-          child: Row(
-            children: List.generate(_items.length, (i) {
-              return Expanded(
-                child: _NavButton(
-                  item: _items[i],
-                  isActive: i == current,
-                  primary: primary,
-                  muted: muted,
-                  isDark: isDark,
-                  onTap: () => onTap(i),
+        padding: const EdgeInsets.fromLTRB(20, 0, 20, 2),
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(36),
+          child: BackdropFilter(
+            filter: ImageFilter.blur(sigmaX: 20, sigmaY: 20),
+            child: Container(
+              height: 64,
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(36),
+                color: isDark
+                    ? const Color(0xFF111111).withOpacity(0.80)
+                    : Colors.white.withOpacity(0.78),
+                border: Border.all(
+                  color: isDark
+                      ? Colors.white.withOpacity(0.08)
+                      : Colors.black.withOpacity(0.07),
+                  width: 0.5,
                 ),
-              );
-            }),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black
+                        .withOpacity(isDark ? 0.50 : 0.10),
+                    blurRadius: 28,
+                    offset: const Offset(0, 6),
+                  ),
+                ],
+              ),
+              child: Row(
+                children: List.generate(_items.length, (i) {
+                  return Expanded(
+                    child: _NavButton(
+                      item: _items[i],
+                      isActive: i == current,
+                      primary: primary,
+                      muted: muted,
+                      onTap: () => onTap(i),
+                    ),
+                  );
+                }),
+              ),
+            ),
           ),
         ),
       ),
@@ -162,7 +178,7 @@ class _NavItem {
 
 class _NavButton extends StatefulWidget {
   final _NavItem item;
-  final bool isActive, isDark;
+  final bool isActive;
   final Color primary, muted;
   final VoidCallback onTap;
 
@@ -171,7 +187,6 @@ class _NavButton extends StatefulWidget {
     required this.isActive,
     required this.primary,
     required this.muted,
-    required this.isDark,
     required this.onTap,
   });
 
@@ -188,8 +203,10 @@ class _NavButtonState extends State<_NavButton>
   void initState() {
     super.initState();
     _ctrl  = AnimationController(
-        vsync: this, duration: const Duration(milliseconds: 120));
-    _scale = Tween<double>(begin: 1.0, end: 0.88)
+        vsync: this,
+        duration: const Duration(milliseconds: 130),
+        reverseDuration: const Duration(milliseconds: 100));
+    _scale = Tween<double>(begin: 1.0, end: 0.82)
         .animate(CurvedAnimation(parent: _ctrl, curve: Curves.easeInOut));
   }
 
@@ -216,20 +233,15 @@ class _NavButtonState extends State<_NavButton>
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            AnimatedSwitcher(
-              duration: const Duration(milliseconds: 200),
-              child: Icon(
-                widget.isActive ? widget.item.active : widget.item.inactive,
-                key: ValueKey(widget.isActive),
-                size: 22,
-                color: widget.isActive
-                    ? widget.primary
-                    : widget.muted,
-              ),
+            // Icon — no AnimatedSwitcher to avoid Positioned issues
+            Icon(
+              widget.isActive ? widget.item.active : widget.item.inactive,
+              size: 22,
+              color: widget.isActive ? widget.primary : widget.muted,
             ),
-            const SizedBox(height: 3),
-            AnimatedDefaultTextStyle(
-              duration: const Duration(milliseconds: 200),
+            const SizedBox(height: 4),
+            Text(
+              widget.item.label,
               style: GoogleFonts.dmSans(
                 fontSize: 10,
                 fontWeight: widget.isActive
@@ -237,7 +249,6 @@ class _NavButtonState extends State<_NavButton>
                     : FontWeight.w400,
                 color: widget.isActive ? widget.primary : widget.muted,
               ),
-              child: Text(widget.item.label),
             ),
           ],
         ),
