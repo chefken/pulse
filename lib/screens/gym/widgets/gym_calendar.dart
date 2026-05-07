@@ -2,12 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
-
 import '../../../core/theme/app_colors.dart';
 import '../../../core/utils/date_utils.dart';
 import '../../../providers/gym_provider.dart';
-import '../../../providers/workout_provider.dart';
 import '../../../providers/score_provider.dart';
+import '../../../providers/workout_provider.dart';
 
 class GymCalendar extends StatefulWidget {
   final GymProvider gymProvider;
@@ -28,17 +27,15 @@ class _GymCalendarState extends State<GymCalendar>
   late DateTime _month;
   late AnimationController _slideCtrl;
   late Animation<Offset> _slideAnim;
-  bool _slidingLeft = true;
 
   @override
   void initState() {
     super.initState();
     final now = DateTime.now();
-    _month = DateTime(now.year, now.month);
+    _month     = DateTime(now.year, now.month);
     _slideCtrl = AnimationController(
-        vsync: this, duration: const Duration(milliseconds: 280));
-    _slideAnim = Tween<Offset>(begin: Offset.zero, end: Offset.zero)
-        .animate(_slideCtrl);
+        vsync: this, duration: const Duration(milliseconds: 260));
+    _slideAnim = AlwaysStoppedAnimation(Offset.zero);
   }
 
   @override
@@ -48,11 +45,11 @@ class _GymCalendarState extends State<GymCalendar>
   }
 
   Future<void> _navigate(bool goLeft) async {
-    _slidingLeft = goLeft;
-    final begin = Offset(goLeft ? 0.08 : -0.08, 0);
-    _slideAnim  = Tween<Offset>(begin: begin, end: Offset.zero)
-        .animate(CurvedAnimation(
-            parent: _slideCtrl, curve: Curves.easeOutCubic));
+    _slideAnim = Tween<Offset>(
+      begin: Offset(goLeft ? 0.07 : -0.07, 0),
+      end: Offset.zero,
+    ).animate(CurvedAnimation(
+        parent: _slideCtrl, curve: Curves.easeOutCubic));
     setState(() {
       _month = goLeft
           ? DateTime(_month.year, _month.month - 1)
@@ -66,7 +63,9 @@ class _GymCalendarState extends State<GymCalendar>
   void _next() {
     final now  = DateTime.now();
     final next = DateTime(_month.year, _month.month + 1);
-    if (!next.isAfter(DateTime(now.year, now.month))) _navigate(false);
+    if (!next.isAfter(DateTime(now.year, now.month))) {
+      _navigate(false);
+    }
   }
 
   @override
@@ -77,17 +76,13 @@ class _GymCalendarState extends State<GymCalendar>
     final border  = AppColors.border(context);
     final dot     = AppColors.dot(context);
 
-    // Sun-first: 0=Sun, 1=Mon … 6=Sat
-    // Flutter weekday: Mon=1 … Sun=7
-    // To convert Flutter weekday to Sun-first index:
-    //   index = weekday % 7   (Sun=7→0, Mon=1→1 … Sat=6→6)
+    // Sunday-first grid offset
+    // Flutter weekday: Mon=1…Sun=7 → Sun-first index = weekday % 7
     final firstDay    = DateTime(_month.year, _month.month, 1);
     final daysInMonth = DateTime(_month.year, _month.month + 1, 0).day;
-    // Sun-first offset for first day of month
-    final startOffset = firstDay.weekday % 7; // Sun=0, Mon=1 … Sat=6
+    final startOffset = firstDay.weekday % 7;
 
     final today = PulseDateUtils.today;
-    // Sun-first headers
     const hdrs  = ['S', 'M', 'T', 'W', 'T', 'F', 'S'];
 
     return Container(
@@ -132,7 +127,7 @@ class _GymCalendarState extends State<GymCalendar>
 
           const SizedBox(height: 14),
 
-          // Weekday headers (Sun first)
+          // Weekday headers
           Row(
             children: hdrs.map((h) => Expanded(
               child: Center(
@@ -148,7 +143,7 @@ class _GymCalendarState extends State<GymCalendar>
 
           const SizedBox(height: 8),
 
-          // Calendar grid with slide animation
+          // Calendar grid
           SlideTransition(
             position: _slideAnim,
             child: GridView.builder(
@@ -167,7 +162,8 @@ class _GymCalendarState extends State<GymCalendar>
                 if (idx < startOffset) return const SizedBox();
 
                 final day  = idx - startOffset + 1;
-                final date = DateTime(_month.year, _month.month, day);
+                final date =
+                    DateTime(_month.year, _month.month, day);
                 final key  = PulseDateUtils.formatDateKey(date);
 
                 final isToday  = PulseDateUtils.isSameDay(date, today);
@@ -175,19 +171,20 @@ class _GymCalendarState extends State<GymCalendar>
                 final done     = !isFuture &&
                     widget.gymProvider.sessionCompletedOn(date);
                 final log      = widget.workoutProvider.logFor(key);
-                final hasLog   = log != null && log.exercises.isNotEmpty;
+                final hasLog   =
+                    log != null && log.exercises.isNotEmpty;
 
                 return GestureDetector(
                   onTap: () => _showSheet(
-                    context, date, key, log,
-                    primary, muted, surface, border,
-                  ),
+                      context, date, key, log,
+                      primary, muted, surface, border),
                   child: AnimatedContainer(
-                    duration: const Duration(milliseconds: 200),
+                    duration: const Duration(milliseconds: 180),
                     decoration: BoxDecoration(
                       shape: BoxShape.circle,
                       border: isToday
-                          ? Border.all(color: primary, width: 1.2)
+                          ? Border.all(
+                              color: primary, width: 1.2)
                           : null,
                     ),
                     child: Column(
@@ -208,7 +205,8 @@ class _GymCalendarState extends State<GymCalendar>
                         if (done || hasLog)
                           Container(
                             width: 4, height: 4,
-                            margin: const EdgeInsets.only(top: 2),
+                            margin:
+                                const EdgeInsets.only(top: 2),
                             decoration: BoxDecoration(
                               shape: BoxShape.circle,
                               color: dot,
@@ -228,6 +226,7 @@ class _GymCalendarState extends State<GymCalendar>
     );
   }
 
+  // ── Day sheet — mood + discipline + workout only ───────────
   void _showSheet(
     BuildContext context,
     DateTime date,
@@ -239,183 +238,214 @@ class _GymCalendarState extends State<GymCalendar>
     Color border,
   ) {
     final bg     = AppColors.bg(context);
-    final score  = context
-        .read<ScoreProvider>()
-        .recordFor(dateKey);
+    final record = context.read<ScoreProvider>().recordFor(dateKey);
 
-    // Friendly names from ScoreProvider
-    final moodRating    = score?.userRating ?? 0;
-    final habitTitles   = score?.completedHabitTitles ?? <String>[];
-    final taskTitles    = score?.completedTaskTitles  ?? <String>[];
+    final moodRating  = record?.userRating ?? 0;
+    final discipline  = record != null
+        ? (record.disciplineScore * 100).toInt()
+        : null;
 
     showModalBottomSheet(
       context: context,
       backgroundColor: Colors.transparent,
       isScrollControlled: true,
-      builder: (_) => Container(
-        margin: const EdgeInsets.fromLTRB(12, 0, 12, 12),
-        padding: const EdgeInsets.fromLTRB(24, 8, 24, 32),
-        decoration: BoxDecoration(
-          color: bg,
-          borderRadius: BorderRadius.circular(28),
-          border: Border.all(color: border, width: 0.5),
-        ),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // Handle
-            Center(
-              child: Container(
-                width: 32, height: 3,
-                margin: const EdgeInsets.only(top: 12, bottom: 22),
-                decoration: BoxDecoration(
-                  color: border,
-                  borderRadius: BorderRadius.circular(2),
-                ),
-              ),
-            ),
-
-            // Date
-            Text(
-              DateFormat('EEEE, d MMMM').format(date),
-              style: GoogleFonts.dmSans(
-                fontSize: 17,
-                fontWeight: FontWeight.w700,
-                color: primary,
-                letterSpacing: -0.4,
-              ),
-            ),
-
-            const SizedBox(height: 20),
-
-            // Mood
-            if (moodRating > 0) ...[
-              _SheetRow('Mood', '$moodRating / 10', primary, muted),
-              const SizedBox(height: 12),
-            ],
-
-            // Habits
-            if (habitTitles.isNotEmpty) ...[
-              _SheetLabel('Habits', muted),
-              const SizedBox(height: 6),
-              ...habitTitles.map((h) => _Bullet(h, primary, muted)),
-              const SizedBox(height: 12),
-            ],
-
-            // Tasks
-            if (taskTitles.isNotEmpty) ...[
-              _SheetLabel('Tasks', muted),
-              const SizedBox(height: 6),
-              ...taskTitles.map((t) => _Bullet(t, primary, muted)),
-              const SizedBox(height: 12),
-            ],
-
-            // Workout
-            if (log != null && log.exercises.isNotEmpty) ...[
-              _SheetLabel('Workout', muted),
-              const SizedBox(height: 6),
-              ...log.exercises.map<Widget>((ex) => _Bullet(
-                '${ex.name} — ${ex.sets.length} set${ex.sets.length != 1 ? 's' : ''}',
-                primary,
-                muted,
-              )),
-            ],
-
-            // Nothing logged
-            if (moodRating == 0 &&
-                habitTitles.isEmpty &&
-                taskTitles.isEmpty &&
-                (log == null || log.exercises.isEmpty))
-              Text(
-                'Nothing logged for this day.',
-                style: GoogleFonts.dmSans(
-                    fontSize: 14, color: muted),
-              ),
-
-            const SizedBox(height: 4),
-          ],
-        ),
+      builder: (_) => _DaySheet(
+        date: date,
+        log: log,
+        moodRating: moodRating,
+        disciplinePercent: discipline,
+        primary: primary,
+        muted: muted,
+        bg: bg,
+        border: border,
       ),
     );
   }
 }
 
 // ─────────────────────────────────────────────────────────────
-// Sheet helper widgets
+// Day sheet widget
 // ─────────────────────────────────────────────────────────────
-class _SheetRow extends StatelessWidget {
-  final String label, value;
-  final Color primary, muted;
-  const _SheetRow(this.label, this.value, this.primary, this.muted);
+class _DaySheet extends StatelessWidget {
+  final DateTime date;
+  final dynamic log;
+  final int moodRating;
+  final int? disciplinePercent;
+  final Color primary, muted, bg, border;
+
+  const _DaySheet({
+    required this.date,
+    required this.log,
+    required this.moodRating,
+    required this.disciplinePercent,
+    required this.primary,
+    required this.muted,
+    required this.bg,
+    required this.border,
+  });
 
   @override
   Widget build(BuildContext context) {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-      children: [
-        Text(label,
-            style: GoogleFonts.dmSans(fontSize: 14, color: muted)),
-        Text(value,
-            style: GoogleFonts.dmSans(
-              fontSize: 14,
-              fontWeight: FontWeight.w600,
-              color: primary,
-            )),
-      ],
-    );
-  }
-}
+    final hasWorkout = log != null &&
+        (log.exercises as List).isNotEmpty;
 
-class _SheetLabel extends StatelessWidget {
-  final String text;
-  final Color muted;
-  const _SheetLabel(this.text, this.muted);
-
-  @override
-  Widget build(BuildContext context) {
-    return Text(
-      text.toUpperCase(),
-      style: GoogleFonts.dmSans(
-        fontSize: 9,
-        fontWeight: FontWeight.w700,
-        color: muted,
-        letterSpacing: 1.4,
+    return Container(
+      margin: const EdgeInsets.fromLTRB(12, 0, 12, 12),
+      padding: const EdgeInsets.fromLTRB(24, 8, 24, 32),
+      decoration: BoxDecoration(
+        color: bg,
+        borderRadius: BorderRadius.circular(28),
+        border: Border.all(color: border, width: 0.5),
       ),
-    );
-  }
-}
-
-class _Bullet extends StatelessWidget {
-  final String text;
-  final Color primary, muted;
-  const _Bullet(this.text, this.primary, this.muted);
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 5),
-      child: Row(
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Padding(
-            padding: const EdgeInsets.only(top: 5, right: 9),
+          // Handle
+          Center(
             child: Container(
-              width: 4, height: 4,
+              width: 32, height: 3,
+              margin:
+                  const EdgeInsets.only(top: 12, bottom: 22),
               decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                color: muted.withOpacity(0.5),
+                color: border,
+                borderRadius: BorderRadius.circular(2),
               ),
             ),
           ),
-          Expanded(
-            child: Text(text,
-                style: GoogleFonts.dmSans(
-                    fontSize: 13, color: primary)),
+
+          // Date heading
+          Text(
+            DateFormat('EEEE, d MMMM').format(date),
+            style: GoogleFonts.dmSans(
+              fontSize: 17,
+              fontWeight: FontWeight.w700,
+              color: primary,
+              letterSpacing: -0.4,
+            ),
           ),
+
+          const SizedBox(height: 20),
+
+          // ── Mood + Discipline row ────────────────────────
+          Row(
+            children: [
+              Expanded(
+                child: _MetaRow(
+                  label: 'Mood',
+                  value: moodRating > 0
+                      ? '$moodRating/10'
+                      : '—',
+                  primary: primary,
+                  muted: muted,
+                ),
+              ),
+              const SizedBox(width: 24),
+              Expanded(
+                child: _MetaRow(
+                  label: 'Discipline',
+                  value: disciplinePercent != null
+                      ? '$disciplinePercent%'
+                      : '—',
+                  primary: primary,
+                  muted: muted,
+                ),
+              ),
+            ],
+          ),
+
+          // ── Workout ──────────────────────────────────────
+          if (!hasWorkout) ...[
+            const SizedBox(height: 22),
+            Text(
+              'No workout logged.',
+              style: GoogleFonts.dmSans(
+                  fontSize: 14, color: muted),
+            ),
+          ] else ...[
+            const SizedBox(height: 20),
+            // Thin divider
+            Container(height: 0.5, color: border),
+            const SizedBox(height: 16),
+            // Exercise list — name left, sets right, no bullets
+            ...List<Widget>.from(
+              (log.exercises as List).map((ex) {
+                final setCount = (ex.sets as List).length;
+                return Padding(
+                  padding: const EdgeInsets.only(bottom: 11),
+                  child: Row(
+                    mainAxisAlignment:
+                        MainAxisAlignment.spaceBetween,
+                    children: [
+                      Expanded(
+                        child: Text(
+                          ex.name as String,
+                          style: GoogleFonts.dmSans(
+                            fontSize: 14,
+                            fontWeight: FontWeight.w500,
+                            color: primary,
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 16),
+                      Text(
+                        '$setCount ${setCount == 1 ? 'set' : 'sets'}',
+                        style: GoogleFonts.dmSans(
+                          fontSize: 13,
+                          color: muted,
+                          fontWeight: FontWeight.w400,
+                        ),
+                      ),
+                    ],
+                  ),
+                );
+              }),
+            ),
+          ],
+
+          const SizedBox(height: 4),
         ],
       ),
     );
   }
 }
 
+class _MetaRow extends StatelessWidget {
+  final String label, value;
+  final Color primary, muted;
+
+  const _MetaRow({
+    required this.label,
+    required this.value,
+    required this.primary,
+    required this.muted,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          label.toUpperCase(),
+          style: GoogleFonts.dmSans(
+            fontSize: 9,
+            fontWeight: FontWeight.w600,
+            color: muted,
+            letterSpacing: 1.4,
+          ),
+        ),
+        const SizedBox(height: 4),
+        Text(
+          value,
+          style: GoogleFonts.dmSans(
+            fontSize: 18,
+            fontWeight: FontWeight.w700,
+            color: primary,
+            letterSpacing: -0.5,
+          ),
+        ),
+      ],
+    );
+  }
+}

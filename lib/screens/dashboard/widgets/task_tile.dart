@@ -27,13 +27,31 @@ class _TaskTileState extends State<TaskTile>
   late final AnimationController _ctrl;
   late final Animation<double> _scale;
 
+  // Optimistic local state — flips instantly on tap so the
+  // UI never waits for the provider/Hive round-trip.
+  late bool _localDone;
+
   @override
   void initState() {
     super.initState();
-    _ctrl  = AnimationController(
-        vsync: this, duration: const Duration(milliseconds: 120));
-    _scale = Tween<double>(begin: 1.0, end: 0.97)
-        .animate(CurvedAnimation(parent: _ctrl, curve: Curves.easeInOut));
+    _localDone = widget.task.isCompleted;
+    _ctrl = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 100),
+      reverseDuration: const Duration(milliseconds: 80),
+    );
+    _scale = Tween<double>(begin: 1.0, end: 0.97).animate(
+        CurvedAnimation(parent: _ctrl, curve: Curves.easeInOut));
+  }
+
+  // Keep local state in sync if the parent rebuilds the tile
+  // (e.g. after a full provider refresh) without a tap.
+  @override
+  void didUpdateWidget(TaskTile oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.task.isCompleted != widget.task.isCompleted) {
+      _localDone = widget.task.isCompleted;
+    }
   }
 
   @override
@@ -42,20 +60,23 @@ class _TaskTileState extends State<TaskTile>
     super.dispose();
   }
 
-  void _tap() async {
+  void _tap() {
     HapticFeedback.lightImpact();
-    await _ctrl.forward();
-    await _ctrl.reverse();
+    // 1. Flip local state instantly — zero lag
+    setState(() => _localDone = !_localDone);
+    // 2. Brief scale animation (non-blocking)
+    _ctrl.forward().then((_) => _ctrl.reverse());
+    // 3. Persist async — does not gate the visual update
     widget.onToggle();
   }
 
   @override
   Widget build(BuildContext context) {
-    final done    = widget.task.isCompleted;
     final primary = AppColors.textPrimary(context);
     final muted   = AppColors.textMuted(context);
     final surface = AppColors.surface(context);
     final border  = AppColors.border(context);
+    final bg      = AppColors.bg(context);
 
     return AnimatedBuilder(
       animation: _scale,
@@ -63,37 +84,45 @@ class _TaskTileState extends State<TaskTile>
           Transform.scale(scale: _scale.value, child: child),
       child: GestureDetector(
         onTap: _tap,
+        behavior: HitTestBehavior.opaque,
         child: AnimatedContainer(
-          duration: const Duration(milliseconds: 220),
+          duration: const Duration(milliseconds: 180),
           margin: const EdgeInsets.only(bottom: 8),
           padding: const EdgeInsets.symmetric(
               horizontal: 16, vertical: 13),
           decoration: BoxDecoration(
-            color: done ? primary.withOpacity(0.05) : surface,
+            color: _localDone
+                ? primary.withOpacity(0.05)
+                : surface,
             borderRadius: BorderRadius.circular(16),
             border: Border.all(
-              color: done ? primary.withOpacity(0.18) : border,
+              color: _localDone
+                  ? primary.withOpacity(0.18)
+                  : border,
               width: 0.5,
             ),
           ),
           child: Row(
             children: [
-              // Checkbox
+              // Checkbox — driven by _localDone, not task.isCompleted
               AnimatedContainer(
-                duration: const Duration(milliseconds: 220),
-                width: 21, height: 21,
+                duration: const Duration(milliseconds: 160),
+                width: 21,
+                height: 21,
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
-                  color: done ? primary : Colors.transparent,
+                  color:
+                      _localDone ? primary : Colors.transparent,
                   border: Border.all(
-                    color:
-                        done ? primary : muted.withOpacity(0.45),
+                    color: _localDone
+                        ? primary
+                        : muted.withOpacity(0.45),
                     width: 1.2,
                   ),
                 ),
-                child: done
+                child: _localDone
                     ? Icon(Icons.check_rounded,
-                        size: 12, color: AppColors.bg(context))
+                        size: 12, color: bg)
                     : null,
               ),
 
@@ -104,12 +133,12 @@ class _TaskTileState extends State<TaskTile>
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     AnimatedDefaultTextStyle(
-                      duration: const Duration(milliseconds: 220),
+                      duration: const Duration(milliseconds: 180),
                       style: GoogleFonts.dmSans(
                         fontSize: 14,
                         fontWeight: FontWeight.w500,
-                        color: done ? muted : primary,
-                        decoration: done
+                        color: _localDone ? muted : primary,
+                        decoration: _localDone
                             ? TextDecoration.lineThrough
                             : TextDecoration.none,
                         decorationColor: muted,
@@ -121,8 +150,7 @@ class _TaskTileState extends State<TaskTile>
                       const SizedBox(height: 2),
                       Text('Daily',
                           style: GoogleFonts.dmSans(
-                            fontSize: 10, color: muted,
-                          )),
+                              fontSize: 10, color: muted)),
                     ],
                   ],
                 ),
@@ -153,8 +181,11 @@ class _IconBtn extends StatelessWidget {
   final IconData icon;
   final Color color;
   final VoidCallback onTap;
+
   const _IconBtn({
-    required this.icon, required this.color, required this.onTap,
+    required this.icon,
+    required this.color,
+    required this.onTap,
   });
 
   @override

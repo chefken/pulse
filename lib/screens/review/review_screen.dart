@@ -69,7 +69,6 @@ class _ReviewScreenState extends State<ReviewScreen> {
               parent: AlwaysScrollableScrollPhysics()),
           slivers: [
 
-            // Header
             SliverToBoxAdapter(
               child: Padding(
                 padding: const EdgeInsets.fromLTRB(24, 20, 24, 0),
@@ -78,8 +77,10 @@ class _ReviewScreenState extends State<ReviewScreen> {
                   children: [
                     Text('Review',
                         style: GoogleFonts.dmSans(
-                          fontSize: 20, fontWeight: FontWeight.w600,
-                          color: primary, letterSpacing: -0.4,
+                          fontSize: 20,
+                          fontWeight: FontWeight.w600,
+                          color: primary,
+                          letterSpacing: -0.4,
                         )),
                     Text(
                       PulseDateUtils.formatDisplay(DateTime.now()),
@@ -98,7 +99,8 @@ class _ReviewScreenState extends State<ReviewScreen> {
               child: Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 24),
                 child: Container(
-                  padding: const EdgeInsets.fromLTRB(20, 20, 20, 24),
+                  padding:
+                      const EdgeInsets.fromLTRB(20, 20, 20, 24),
                   decoration: BoxDecoration(
                     color: surface,
                     borderRadius: BorderRadius.circular(24),
@@ -109,8 +111,10 @@ class _ReviewScreenState extends State<ReviewScreen> {
                     children: [
                       Text('How was your day?',
                           style: GoogleFonts.dmSans(
-                            fontSize: 15, fontWeight: FontWeight.w600,
-                            color: primary, letterSpacing: -0.3,
+                            fontSize: 15,
+                            fontWeight: FontWeight.w600,
+                            color: primary,
+                            letterSpacing: -0.3,
                           )),
                       const SizedBox(height: 4),
                       Text('Rate from 1 to 10.',
@@ -119,20 +123,21 @@ class _ReviewScreenState extends State<ReviewScreen> {
 
                       const SizedBox(height: 22),
 
-                      // Big number
+                      // Big number display
                       Center(
                         child: AnimatedSwitcher(
-                          duration: const Duration(milliseconds: 180),
+                          duration:
+                              const Duration(milliseconds: 180),
                           transitionBuilder: (child, anim) =>
-                              FadeTransition(opacity: anim, child: child),
+                              FadeTransition(
+                                  opacity: anim, child: child),
                           child: Text(
                             _rating == 0 ? '—' : '$_rating',
                             key: ValueKey(_rating),
                             style: GoogleFonts.figtree(
                               fontSize: 64,
                               fontWeight: FontWeight.w800,
-                              color:
-                                  _rating == 0 ? muted : primary,
+                              color: _rating == 0 ? muted : primary,
                               letterSpacing: -2,
                             ),
                           ),
@@ -141,7 +146,7 @@ class _ReviewScreenState extends State<ReviewScreen> {
 
                       const SizedBox(height: 20),
 
-                      // Dots
+                      // Rating dots
                       Row(
                         mainAxisAlignment:
                             MainAxisAlignment.spaceBetween,
@@ -151,8 +156,8 @@ class _ReviewScreenState extends State<ReviewScreen> {
                           return GestureDetector(
                             onTap: () => _select(n),
                             child: AnimatedContainer(
-                              duration:
-                                  const Duration(milliseconds: 160),
+                              duration: const Duration(
+                                  milliseconds: 160),
                               curve: Curves.easeOut,
                               width: selected ? 30 : 26,
                               height: selected ? 30 : 26,
@@ -162,9 +167,7 @@ class _ReviewScreenState extends State<ReviewScreen> {
                                     ? primary
                                     : Colors.transparent,
                                 border: Border.all(
-                                  color: selected
-                                      ? primary
-                                      : border,
+                                  color: selected ? primary : border,
                                   width: selected ? 0 : 0.7,
                                 ),
                               ),
@@ -176,8 +179,7 @@ class _ReviewScreenState extends State<ReviewScreen> {
                                     fontWeight: selected
                                         ? FontWeight.w700
                                         : FontWeight.w400,
-                                    color:
-                                        selected ? bg : muted,
+                                    color: selected ? bg : muted,
                                   ),
                                 ),
                               ),
@@ -188,7 +190,7 @@ class _ReviewScreenState extends State<ReviewScreen> {
 
                       const SizedBox(height: 22),
 
-                      // Save
+                      // Save button
                       SizedBox(
                         width: double.infinity,
                         child: GestureDetector(
@@ -234,7 +236,8 @@ class _ReviewScreenState extends State<ReviewScreen> {
             // Discipline graph
             SliverToBoxAdapter(
               child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 24),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 24),
                 child: _DisciplineGraph(
                   score: score,
                   surface: surface,
@@ -255,7 +258,7 @@ class _ReviewScreenState extends State<ReviewScreen> {
 }
 
 // ─────────────────────────────────────────────────────────────
-// Discipline graph — fixed and stable
+// Discipline graph — clipping fix applied
 // ─────────────────────────────────────────────────────────────
 class _DisciplineGraph extends StatefulWidget {
   final ScoreProvider score;
@@ -301,7 +304,7 @@ class _DisciplineGraphState extends State<_DisciplineGraph>
     final records = widget.score.last30Days;
 
     return Container(
-      padding: const EdgeInsets.all(20),
+      padding: const EdgeInsets.fromLTRB(20, 20, 20, 20),
       decoration: BoxDecoration(
         color: widget.surface,
         borderRadius: BorderRadius.circular(24),
@@ -315,8 +318,10 @@ class _DisciplineGraphState extends State<_DisciplineGraph>
             children: [
               Text('Discipline',
                   style: GoogleFonts.dmSans(
-                    fontSize: 13, fontWeight: FontWeight.w600,
-                    color: widget.primary, letterSpacing: -0.2,
+                    fontSize: 13,
+                    fontWeight: FontWeight.w600,
+                    color: widget.primary,
+                    letterSpacing: -0.2,
                   )),
               Text('30 days',
                   style: GoogleFonts.dmSans(
@@ -324,8 +329,11 @@ class _DisciplineGraphState extends State<_DisciplineGraph>
             ],
           ),
           const SizedBox(height: 20),
+
+          // ── FIX: taller box + maxY headroom so 100% never clips ──
           SizedBox(
-            height: 130,
+            // Increased from 130 → 150 to give the top label room
+            height: 150,
             child: records.length < 2
                 ? Center(
                     child: Text('Not enough data yet.',
@@ -335,76 +343,99 @@ class _DisciplineGraphState extends State<_DisciplineGraph>
                 : AnimatedBuilder(
                     animation: _anim,
                     builder: (_, __) {
-                      final count = (records.length * _anim.value)
-                          .ceil()
-                          .clamp(2, records.length);
+                      final count =
+                          (records.length * _anim.value)
+                              .ceil()
+                              .clamp(2, records.length);
                       final visible = records.sublist(0, count);
-                      final maxX    = (records.length - 1)
+                      final maxX = (records.length - 1)
                           .toDouble()
                           .clamp(1.0, 29.0);
 
-                      final spots = visible.asMap().entries.map((e) {
-                        return FlSpot(
-                          e.key.toDouble(),
-                          e.value.disciplineScore
-                              .clamp(0.0, 1.0),
-                        );
-                      }).toList();
+                      final spots = visible
+                          .asMap()
+                          .entries
+                          .map((e) => FlSpot(
+                                e.key.toDouble(),
+                                e.value.disciplineScore
+                                    .clamp(0.0, 1.0),
+                              ))
+                          .toList();
 
                       return LineChart(
                         LineChartData(
+                          // ── Key fix: maxY slightly above 1.0 so
+                          //    the top edge of the curve and the
+                          //    100% grid line are never clipped ──
+                          minY: 0,
+                          maxY: 1.12,
+                          minX: 0,
+                          maxX: maxX,
+
+                          // Remove ClipData so fl_chart doesn't
+                          // crop the line at the container edge
+                          clipData: const FlClipData.none(),
+
                           gridData: FlGridData(
                             show: true,
                             drawVerticalLine: false,
                             horizontalInterval: 0.5,
-                            getDrawingHorizontalLine: (_) => FlLine(
+                            getDrawingHorizontalLine: (_) =>
+                                FlLine(
                               color: widget.trackColor,
                               strokeWidth: 0.7,
                               dashArray: [4, 6],
                             ),
                           ),
+
                           titlesData: FlTitlesData(
                             show: true,
                             leftTitles: AxisTitles(
                               sideTitles: SideTitles(
                                 showTitles: true,
+                                // reservedSize increased so the
+                                // "100" label isn't truncated
+                                reservedSize: 32,
                                 interval: 0.5,
-                                reservedSize: 28,
                                 getTitlesWidget: (val, _) {
                                   if (val != 0.0 &&
                                       val != 0.5 &&
                                       val != 1.0) {
                                     return const SizedBox();
                                   }
-                                  return Text(
-                                    '${(val * 100).toInt()}',
-                                    style: GoogleFonts.dmSans(
-                                      fontSize: 9,
-                                      color: widget.muted,
+                                  return Padding(
+                                    padding: const EdgeInsets.only(
+                                        right: 4),
+                                    child: Text(
+                                      '${(val * 100).toInt()}',
+                                      style: GoogleFonts.dmSans(
+                                        fontSize: 9,
+                                        color: widget.muted,
+                                      ),
+                                      textAlign: TextAlign.right,
                                     ),
                                   );
                                 },
                               ),
                             ),
                             rightTitles: const AxisTitles(
-                                sideTitles:
-                                    SideTitles(showTitles: false)),
+                                sideTitles: SideTitles(
+                                    showTitles: false)),
                             topTitles: const AxisTitles(
-                                sideTitles:
-                                    SideTitles(showTitles: false)),
+                                sideTitles: SideTitles(
+                                    // Extra top reserved space so
+                                    // the chart line has breathing room
+                                    showTitles: false,
+                                    reservedSize: 8)),
                             bottomTitles: const AxisTitles(
-                                sideTitles:
-                                    SideTitles(showTitles: false)),
+                                sideTitles: SideTitles(
+                                    showTitles: false)),
                           ),
+
                           borderData: FlBorderData(show: false),
-                          minX: 0,
-                          maxX: maxX,
-                          minY: 0,
-                          maxY: 1,
-                          clipData: const FlClipData.all(),
+
                           lineTouchData: LineTouchData(
-                            touchTooltipData:
-                                LineTouchTooltipData(
+                            touchTooltipData: LineTouchTooltipData(
                               getTooltipColor: (_) =>
                                   widget.primary.withOpacity(0.08),
                               getTooltipItems: (spots) =>
@@ -421,6 +452,7 @@ class _DisciplineGraphState extends State<_DisciplineGraph>
                                       .toList(),
                             ),
                           ),
+
                           lineBarsData: [
                             LineChartBarData(
                               spots: spots,
@@ -430,9 +462,8 @@ class _DisciplineGraphState extends State<_DisciplineGraph>
                               barWidth: 1.8,
                               dotData: FlDotData(
                                 show: records.length <= 14,
-                                getDotPainter:
-                                    (_, __, ___, ____) =>
-                                        FlDotCirclePainter(
+                                getDotPainter: (_, __, ___, ____) =>
+                                    FlDotCirclePainter(
                                   radius: 2.5,
                                   color: widget.primary,
                                   strokeWidth: 0,
