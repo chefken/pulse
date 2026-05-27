@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
 import 'package:fl_chart/fl_chart.dart';
+import 'package:intl/intl.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/utils/date_utils.dart';
 import '../../providers/score_provider.dart';
@@ -19,9 +20,15 @@ class _ReviewScreenState extends State<ReviewScreen> {
   int  _rating = 0;
   bool _saved  = false;
 
+  // History month navigator
+  late DateTime _historyMonth;
+
   @override
   void initState() {
     super.initState();
+    final now = DateTime.now();
+    _historyMonth = DateTime(now.year, now.month);
+
     WidgetsBinding.instance.addPostFrameCallback((_) {
       final r = context.read<ScoreProvider>().todayRecord;
       if (r != null && r.userRating > 0) {
@@ -46,6 +53,19 @@ class _ReviewScreenState extends State<ReviewScreen> {
     setState(() => _saved = true);
   }
 
+  void _prevMonth() => setState(() {
+        _historyMonth =
+            DateTime(_historyMonth.year, _historyMonth.month - 1);
+      });
+
+  void _nextMonth() {
+    final now  = DateTime.now();
+    final next = DateTime(_historyMonth.year, _historyMonth.month + 1);
+    if (!next.isAfter(DateTime(now.year, now.month))) {
+      setState(() => _historyMonth = next);
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final score  = context.watch<ScoreProvider>();
@@ -60,6 +80,16 @@ class _ReviewScreenState extends State<ReviewScreen> {
         ? const Color(0xFF1E1E1E)
         : const Color(0xFFE8E8E8);
 
+    // Build the days of the selected history month
+    final daysInMonth =
+        DateTime(_historyMonth.year, _historyMonth.month + 1, 0).day;
+
+    final historyDays = List.generate(daysInMonth, (i) {
+      final d   = DateTime(_historyMonth.year, _historyMonth.month, i + 1);
+      final key = PulseDateUtils.formatDateKey(d);
+      return MapEntry(d, score.recordFor(key));
+    }).where((e) => e.value != null && e.value!.userRating > 0).toList();
+
     return Scaffold(
       backgroundColor: bg,
       body: SafeArea(
@@ -69,6 +99,7 @@ class _ReviewScreenState extends State<ReviewScreen> {
               parent: AlwaysScrollableScrollPhysics()),
           slivers: [
 
+            // ── Header ──────────────────────────────────────
             SliverToBoxAdapter(
               child: Padding(
                 padding: const EdgeInsets.fromLTRB(24, 20, 24, 0),
@@ -77,10 +108,8 @@ class _ReviewScreenState extends State<ReviewScreen> {
                   children: [
                     Text('Review',
                         style: GoogleFonts.dmSans(
-                          fontSize: 20,
-                          fontWeight: FontWeight.w600,
-                          color: primary,
-                          letterSpacing: -0.4,
+                          fontSize: 20, fontWeight: FontWeight.w600,
+                          color: primary, letterSpacing: -0.4,
                         )),
                     Text(
                       PulseDateUtils.formatDisplay(DateTime.now()),
@@ -94,7 +123,7 @@ class _ReviewScreenState extends State<ReviewScreen> {
 
             const SliverToBoxAdapter(child: SizedBox(height: 28)),
 
-            // Mood card
+            // ── Mood card ────────────────────────────────────
             SliverToBoxAdapter(
               child: Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 24),
@@ -111,10 +140,8 @@ class _ReviewScreenState extends State<ReviewScreen> {
                     children: [
                       Text('How was your day?',
                           style: GoogleFonts.dmSans(
-                            fontSize: 15,
-                            fontWeight: FontWeight.w600,
-                            color: primary,
-                            letterSpacing: -0.3,
+                            fontSize: 15, fontWeight: FontWeight.w600,
+                            color: primary, letterSpacing: -0.3,
                           )),
                       const SizedBox(height: 4),
                       Text('Rate from 1 to 10.',
@@ -123,14 +150,12 @@ class _ReviewScreenState extends State<ReviewScreen> {
 
                       const SizedBox(height: 22),
 
-                      // Big number display
+                      // Big number
                       Center(
                         child: AnimatedSwitcher(
-                          duration:
-                              const Duration(milliseconds: 180),
+                          duration: const Duration(milliseconds: 180),
                           transitionBuilder: (child, anim) =>
-                              FadeTransition(
-                                  opacity: anim, child: child),
+                              FadeTransition(opacity: anim, child: child),
                           child: Text(
                             _rating == 0 ? '—' : '$_rating',
                             key: ValueKey(_rating),
@@ -146,7 +171,7 @@ class _ReviewScreenState extends State<ReviewScreen> {
 
                       const SizedBox(height: 20),
 
-                      // Rating dots
+                      // 1–10 dots
                       Row(
                         mainAxisAlignment:
                             MainAxisAlignment.spaceBetween,
@@ -156,8 +181,8 @@ class _ReviewScreenState extends State<ReviewScreen> {
                           return GestureDetector(
                             onTap: () => _select(n),
                             child: AnimatedContainer(
-                              duration: const Duration(
-                                  milliseconds: 160),
+                              duration:
+                                  const Duration(milliseconds: 160),
                               curve: Curves.easeOut,
                               width: selected ? 30 : 26,
                               height: selected ? 30 : 26,
@@ -167,21 +192,20 @@ class _ReviewScreenState extends State<ReviewScreen> {
                                     ? primary
                                     : Colors.transparent,
                                 border: Border.all(
-                                  color: selected ? primary : border,
+                                  color:
+                                      selected ? primary : border,
                                   width: selected ? 0 : 0.7,
                                 ),
                               ),
                               child: Center(
-                                child: Text(
-                                  '$n',
-                                  style: GoogleFonts.dmSans(
-                                    fontSize: selected ? 12 : 11,
-                                    fontWeight: selected
-                                        ? FontWeight.w700
-                                        : FontWeight.w400,
-                                    color: selected ? bg : muted,
-                                  ),
-                                ),
+                                child: Text('$n',
+                                    style: GoogleFonts.dmSans(
+                                      fontSize: selected ? 12 : 11,
+                                      fontWeight: selected
+                                          ? FontWeight.w700
+                                          : FontWeight.w400,
+                                      color: selected ? bg : muted,
+                                    )),
                               ),
                             ),
                           );
@@ -190,14 +214,13 @@ class _ReviewScreenState extends State<ReviewScreen> {
 
                       const SizedBox(height: 22),
 
-                      // Save button
+                      // Save
                       SizedBox(
                         width: double.infinity,
                         child: GestureDetector(
                           onTap: _save,
                           child: AnimatedContainer(
-                            duration:
-                                const Duration(milliseconds: 200),
+                            duration: const Duration(milliseconds: 200),
                             padding: const EdgeInsets.symmetric(
                                 vertical: 14),
                             decoration: BoxDecoration(
@@ -233,11 +256,10 @@ class _ReviewScreenState extends State<ReviewScreen> {
 
             const SliverToBoxAdapter(child: SizedBox(height: 20)),
 
-            // Discipline graph
+            // ── Discipline graph ─────────────────────────────
             SliverToBoxAdapter(
               child: Padding(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 24),
+                padding: const EdgeInsets.symmetric(horizontal: 24),
                 child: _DisciplineGraph(
                   score: score,
                   surface: surface,
@@ -245,6 +267,150 @@ class _ReviewScreenState extends State<ReviewScreen> {
                   primary: primary,
                   muted: muted,
                   trackColor: trackC,
+                ),
+              ),
+            ),
+
+            const SliverToBoxAdapter(child: SizedBox(height: 24)),
+
+            // ── Mood history ─────────────────────────────────
+            SliverToBoxAdapter(
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 24),
+                child: Container(
+                  padding: const EdgeInsets.all(20),
+                  decoration: BoxDecoration(
+                    color: surface,
+                    borderRadius: BorderRadius.circular(24),
+                    border: Border.all(color: border, width: 0.5),
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      // Month nav header
+                      Row(
+                        mainAxisAlignment:
+                            MainAxisAlignment.spaceBetween,
+                        children: [
+                          Text('Mood history',
+                              style: GoogleFonts.dmSans(
+                                fontSize: 13,
+                                fontWeight: FontWeight.w600,
+                                color: primary,
+                                letterSpacing: -0.2,
+                              )),
+                          Row(
+                            children: [
+                              GestureDetector(
+                                onTap: _prevMonth,
+                                child: Padding(
+                                  padding: const EdgeInsets.all(4),
+                                  child: Icon(
+                                      Icons.chevron_left_rounded,
+                                      size: 18, color: muted),
+                                ),
+                              ),
+                              Text(
+                                DateFormat('MMM yyyy')
+                                    .format(_historyMonth),
+                                style: GoogleFonts.dmSans(
+                                  fontSize: 12, color: muted,
+                                ),
+                              ),
+                              GestureDetector(
+                                onTap: _nextMonth,
+                                child: Padding(
+                                  padding: const EdgeInsets.all(4),
+                                  child: Icon(
+                                      Icons.chevron_right_rounded,
+                                      size: 18, color: muted),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ],
+                      ),
+
+                      const SizedBox(height: 16),
+
+                      if (historyDays.isEmpty)
+                        Padding(
+                          padding: const EdgeInsets.symmetric(
+                              vertical: 12),
+                          child: Text(
+                            'No mood ratings for this month.',
+                            style: GoogleFonts.dmSans(
+                                fontSize: 13, color: muted),
+                          ),
+                        )
+                      else
+                        // Each day with a rating
+                        ...historyDays.map((entry) {
+                          final d    = entry.key;
+                          final rec  = entry.value!;
+                          final mood = rec.userRating;
+
+                          return Padding(
+                            padding:
+                                const EdgeInsets.only(bottom: 12),
+                            child: Row(
+                              children: [
+                                // Date column
+                                SizedBox(
+                                  width: 80,
+                                  child: Text(
+                                    DateFormat('EEE, d').format(d),
+                                    style: GoogleFonts.dmSans(
+                                      fontSize: 12, color: muted,
+                                    ),
+                                  ),
+                                ),
+                                // Bar
+                                Expanded(
+                                  child: Stack(
+                                    children: [
+                                      Container(
+                                        height: 4,
+                                        decoration: BoxDecoration(
+                                          color: trackC,
+                                          borderRadius:
+                                              BorderRadius.circular(2),
+                                        ),
+                                      ),
+                                      FractionallySizedBox(
+                                        widthFactor: mood / 10,
+                                        child: Container(
+                                          height: 4,
+                                          decoration: BoxDecoration(
+                                            color: primary,
+                                            borderRadius:
+                                                BorderRadius.circular(2),
+                                          ),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                                // Number
+                                const SizedBox(width: 10),
+                                SizedBox(
+                                  width: 24,
+                                  child: Text(
+                                    '$mood',
+                                    textAlign: TextAlign.right,
+                                    style: GoogleFonts.dmSans(
+                                      fontSize: 12,
+                                      fontWeight: FontWeight.w600,
+                                      color: primary,
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          );
+                        }),
+                    ],
+                  ),
                 ),
               ),
             ),
@@ -258,7 +424,7 @@ class _ReviewScreenState extends State<ReviewScreen> {
 }
 
 // ─────────────────────────────────────────────────────────────
-// Discipline graph — clipping fix applied
+// Discipline graph — unchanged from last session
 // ─────────────────────────────────────────────────────────────
 class _DisciplineGraph extends StatefulWidget {
   final ScoreProvider score;
@@ -286,10 +452,8 @@ class _DisciplineGraphState extends State<_DisciplineGraph>
   void initState() {
     super.initState();
     _ctrl = AnimationController(
-        vsync: this,
-        duration: const Duration(milliseconds: 1000));
-    _anim = CurvedAnimation(
-        parent: _ctrl, curve: Curves.easeOutCubic);
+        vsync: this, duration: const Duration(milliseconds: 1000));
+    _anim = CurvedAnimation(parent: _ctrl, curve: Curves.easeOutCubic);
     _ctrl.forward();
   }
 
@@ -318,10 +482,8 @@ class _DisciplineGraphState extends State<_DisciplineGraph>
             children: [
               Text('Discipline',
                   style: GoogleFonts.dmSans(
-                    fontSize: 13,
-                    fontWeight: FontWeight.w600,
-                    color: widget.primary,
-                    letterSpacing: -0.2,
+                    fontSize: 13, fontWeight: FontWeight.w600,
+                    color: widget.primary, letterSpacing: -0.2,
                   )),
               Text('30 days',
                   style: GoogleFonts.dmSans(
@@ -329,10 +491,7 @@ class _DisciplineGraphState extends State<_DisciplineGraph>
             ],
           ),
           const SizedBox(height: 20),
-
-          // ── FIX: taller box + maxY headroom so 100% never clips ──
           SizedBox(
-            // Increased from 130 → 150 to give the top label room
             height: 150,
             child: records.length < 2
                 ? Center(
@@ -352,49 +511,32 @@ class _DisciplineGraphState extends State<_DisciplineGraph>
                           .toDouble()
                           .clamp(1.0, 29.0);
 
-                      final spots = visible
-                          .asMap()
-                          .entries
-                          .map((e) => FlSpot(
-                                e.key.toDouble(),
-                                e.value.disciplineScore
-                                    .clamp(0.0, 1.0),
-                              ))
-                          .toList();
+                      final spots = visible.asMap().entries.map((e) =>
+                          FlSpot(
+                            e.key.toDouble(),
+                            e.value.disciplineScore.clamp(0.0, 1.0),
+                          )).toList();
 
                       return LineChart(
                         LineChartData(
-                          // ── Key fix: maxY slightly above 1.0 so
-                          //    the top edge of the curve and the
-                          //    100% grid line are never clipped ──
-                          minY: 0,
-                          maxY: 1.12,
-                          minX: 0,
-                          maxX: maxX,
-
-                          // Remove ClipData so fl_chart doesn't
-                          // crop the line at the container edge
+                          minY: 0, maxY: 1.12,
+                          minX: 0, maxX: maxX,
                           clipData: const FlClipData.none(),
-
                           gridData: FlGridData(
                             show: true,
                             drawVerticalLine: false,
                             horizontalInterval: 0.5,
-                            getDrawingHorizontalLine: (_) =>
-                                FlLine(
+                            getDrawingHorizontalLine: (_) => FlLine(
                               color: widget.trackColor,
                               strokeWidth: 0.7,
                               dashArray: [4, 6],
                             ),
                           ),
-
                           titlesData: FlTitlesData(
                             show: true,
                             leftTitles: AxisTitles(
                               sideTitles: SideTitles(
                                 showTitles: true,
-                                // reservedSize increased so the
-                                // "100" label isn't truncated
                                 reservedSize: 32,
                                 interval: 0.5,
                                 getTitlesWidget: (val, _) {
@@ -419,40 +561,32 @@ class _DisciplineGraphState extends State<_DisciplineGraph>
                               ),
                             ),
                             rightTitles: const AxisTitles(
-                                sideTitles: SideTitles(
-                                    showTitles: false)),
+                                sideTitles:
+                                    SideTitles(showTitles: false)),
                             topTitles: const AxisTitles(
                                 sideTitles: SideTitles(
-                                    // Extra top reserved space so
-                                    // the chart line has breathing room
                                     showTitles: false,
                                     reservedSize: 8)),
                             bottomTitles: const AxisTitles(
-                                sideTitles: SideTitles(
-                                    showTitles: false)),
+                                sideTitles:
+                                    SideTitles(showTitles: false)),
                           ),
-
                           borderData: FlBorderData(show: false),
-
                           lineTouchData: LineTouchData(
                             touchTooltipData: LineTouchTooltipData(
                               getTooltipColor: (_) =>
                                   widget.primary.withOpacity(0.08),
                               getTooltipItems: (spots) =>
-                                  spots
-                                      .map((s) => LineTooltipItem(
-                                            '${(s.y * 100).toInt()}%',
-                                            GoogleFonts.dmSans(
-                                              fontSize: 11,
-                                              fontWeight:
-                                                  FontWeight.w600,
-                                              color: widget.primary,
-                                            ),
-                                          ))
-                                      .toList(),
+                                  spots.map((s) => LineTooltipItem(
+                                    '${(s.y * 100).toInt()}%',
+                                    GoogleFonts.dmSans(
+                                      fontSize: 11,
+                                      fontWeight: FontWeight.w600,
+                                      color: widget.primary,
+                                    ),
+                                  )).toList(),
                             ),
                           ),
-
                           lineBarsData: [
                             LineChartBarData(
                               spots: spots,
@@ -462,8 +596,9 @@ class _DisciplineGraphState extends State<_DisciplineGraph>
                               barWidth: 1.8,
                               dotData: FlDotData(
                                 show: records.length <= 14,
-                                getDotPainter: (_, __, ___, ____) =>
-                                    FlDotCirclePainter(
+                                getDotPainter:
+                                    (_, __, ___, ____) =>
+                                        FlDotCirclePainter(
                                   radius: 2.5,
                                   color: widget.primary,
                                   strokeWidth: 0,

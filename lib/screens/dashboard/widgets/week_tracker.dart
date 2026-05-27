@@ -22,13 +22,11 @@ class WeekTracker extends StatelessWidget {
     final surface = AppColors.surface(context);
     final border  = AppColors.border(context);
 
-    // Sunday-first labels
+    // Sunday-first: S M T W T F S
     const labels = ['S', 'M', 'T', 'W', 'T', 'F', 'S'];
 
-    final today = PulseDateUtils.today;
-    // Flutter weekday: Mon=1…Sun=7
-    // Sun-first index: Sun=0, Mon=1…Sat=6  →  weekday % 7
-    final todayIndex    = today.weekday % 7;
+    final today         = PulseDateUtils.today;
+    final todayIndex    = today.weekday % 7; // Sun=0…Sat=6
     final daysSinceSun  = today.weekday % 7;
     final sunday        = today.subtract(Duration(days: daysSinceSun));
 
@@ -51,21 +49,23 @@ class WeekTracker extends StatelessWidget {
                     color: muted, letterSpacing: 0.4,
                   )),
               Text(DateFormat('MMM yyyy').format(today),
-                  style:
-                      GoogleFonts.dmSans(fontSize: 10, color: muted)),
+                  style: GoogleFonts.dmSans(fontSize: 10, color: muted)),
             ],
           ),
           const SizedBox(height: 14),
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: List.generate(7, (index) {
-              // index 0 = Sunday, index 6 = Saturday
               final dayDate  = sunday.add(Duration(days: index));
               final dateKey  = DateFormat('yyyy-MM-dd').format(dayDate);
               final isToday  = index == todayIndex;
               final isFuture = dayDate.isAfter(today);
               final record   = score.recordFor(dateKey);
               final isGood   = !isFuture && (record?.isGoodDay ?? false);
+              // Discipline score 0–100 for display inside circle
+              final scoreInt = record != null
+                  ? (record.disciplineScore * 100).toInt()
+                  : null;
 
               return GestureDetector(
                 onTap: () => _showSheet(
@@ -73,13 +73,14 @@ class WeekTracker extends StatelessWidget {
                   primary, muted, surface, border,
                 ),
                 child: SizedBox(
-                  width: 34,
+                  width: 38,
                   child: Column(
                     children: [
                       AnimatedContainer(
                         duration: const Duration(milliseconds: 280),
                         curve: Curves.easeOut,
-                        width: 32, height: 32,
+                        width: 36,
+                        height: 36,
                         decoration: BoxDecoration(
                           shape: BoxShape.circle,
                           color: isGood
@@ -95,17 +96,26 @@ class WeekTracker extends StatelessWidget {
                           ),
                         ),
                         child: Center(
-                          child: isGood
-                              ? Icon(Icons.check_rounded,
-                                  size: 14, color: primary)
-                              : isFuture
-                                  ? const SizedBox()
+                          child: isFuture
+                              ? const SizedBox()
+                              : scoreInt != null && scoreInt > 0
+                                  // Show score number inside circle
+                                  ? Text(
+                                      '$scoreInt',
+                                      style: GoogleFonts.figtree(
+                                        fontSize: 10,
+                                        fontWeight: FontWeight.w700,
+                                        color: isToday
+                                            ? primary
+                                            : primary.withOpacity(0.75),
+                                      ),
+                                    )
                                   : Container(
-                                      width: 4, height: 4,
+                                      width: 4,
+                                      height: 4,
                                       decoration: BoxDecoration(
                                         shape: BoxShape.circle,
-                                        color:
-                                            muted.withOpacity(0.38),
+                                        color: muted.withOpacity(0.38),
                                       ),
                                     ),
                         ),
@@ -152,10 +162,9 @@ class WeekTracker extends StatelessWidget {
     final taskTitles  =
         (record?.completedTaskTitles  as List<String>?) ?? <String>[];
 
-    // Sun-first day labels
     const days = [
-      'SUNDAY','MONDAY','TUESDAY','WEDNESDAY',
-      'THURSDAY','FRIDAY','SATURDAY',
+      'SUNDAY', 'MONDAY', 'TUESDAY', 'WEDNESDAY',
+      'THURSDAY', 'FRIDAY', 'SATURDAY',
     ];
     final dayLabel = days[date.weekday % 7];
 
@@ -180,58 +189,46 @@ class WeekTracker extends StatelessWidget {
                 width: 32, height: 3,
                 margin: const EdgeInsets.only(top: 12, bottom: 22),
                 decoration: BoxDecoration(
-                  color: border,
-                  borderRadius: BorderRadius.circular(2),
-                ),
+                    color: border, borderRadius: BorderRadius.circular(2)),
               ),
             ),
-
             Text(dayLabel,
                 style: GoogleFonts.dmSans(
                   fontSize: 10, fontWeight: FontWeight.w600,
                   color: muted, letterSpacing: 1.2,
                 )),
             const SizedBox(height: 3),
-            Text(
-              DateFormat('d MMMM yyyy').format(date),
-              style: GoogleFonts.dmSans(
-                fontSize: 18, fontWeight: FontWeight.w700,
-                color: primary, letterSpacing: -0.4,
-              ),
-            ),
-
+            Text(DateFormat('d MMMM yyyy').format(date),
+                style: GoogleFonts.dmSans(
+                  fontSize: 18, fontWeight: FontWeight.w700,
+                  color: primary, letterSpacing: -0.4,
+                )),
             const SizedBox(height: 20),
-
             if (moodRating == 0 &&
                 habitTitles.isEmpty &&
                 taskTitles.isEmpty &&
                 !workoutDone &&
                 (log == null || log.exercises.isEmpty))
               Text('No activity logged.',
-                  style: GoogleFonts.dmSans(
-                      fontSize: 14, color: muted))
+                  style: GoogleFonts.dmSans(fontSize: 14, color: muted))
             else ...[
               if (moodRating > 0) ...[
-                _SheetRow('Mood', '$moodRating / 10',
-                    primary, muted),
+                _SheetRow('Mood', '$moodRating / 10', primary, muted),
                 const SizedBox(height: 12),
               ],
               if (habitTitles.isNotEmpty) ...[
                 _SheetLabel('Habits', muted),
                 const SizedBox(height: 6),
-                ...habitTitles.map(
-                    (h) => _SheetBullet(h, primary, muted)),
+                ...habitTitles.map((h) => _SheetBullet(h, primary, muted)),
                 const SizedBox(height: 10),
               ],
               if (taskTitles.isNotEmpty) ...[
                 _SheetLabel('Tasks', muted),
                 const SizedBox(height: 6),
-                ...taskTitles.map(
-                    (t) => _SheetBullet(t, primary, muted)),
+                ...taskTitles.map((t) => _SheetBullet(t, primary, muted)),
                 const SizedBox(height: 10),
               ],
-              if (workoutDone ||
-                  (log != null && log.exercises.isNotEmpty)) ...[
+              if (workoutDone || (log != null && log.exercises.isNotEmpty)) ...[
                 _SheetLabel('Workout', muted),
                 const SizedBox(height: 6),
                 if (log != null && log.exercises.isNotEmpty)
@@ -243,7 +240,6 @@ class WeekTracker extends StatelessWidget {
                   _SheetBullet('Completed', primary, muted),
               ],
             ],
-
             const SizedBox(height: 4),
           ],
         ),
@@ -256,19 +252,14 @@ class _SheetRow extends StatelessWidget {
   final String label, value;
   final Color primary, muted;
   const _SheetRow(this.label, this.value, this.primary, this.muted);
-
   @override
   Widget build(BuildContext context) {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
-        Text(label,
-            style: GoogleFonts.dmSans(fontSize: 14, color: muted)),
-        Text(value,
-            style: GoogleFonts.dmSans(
-              fontSize: 14, fontWeight: FontWeight.w600,
-              color: primary,
-            )),
+        Text(label, style: GoogleFonts.dmSans(fontSize: 14, color: muted)),
+        Text(value, style: GoogleFonts.dmSans(
+            fontSize: 14, fontWeight: FontWeight.w600, color: primary)),
       ],
     );
   }
@@ -278,22 +269,18 @@ class _SheetLabel extends StatelessWidget {
   final String text;
   final Color muted;
   const _SheetLabel(this.text, this.muted);
-
   @override
-  Widget build(BuildContext context) {
-    return Text(text.toUpperCase(),
-        style: GoogleFonts.dmSans(
-          fontSize: 9, fontWeight: FontWeight.w700,
-          color: muted, letterSpacing: 1.4,
-        ));
-  }
+  Widget build(BuildContext context) => Text(text.toUpperCase(),
+      style: GoogleFonts.dmSans(
+        fontSize: 9, fontWeight: FontWeight.w700,
+        color: muted, letterSpacing: 1.4,
+      ));
 }
 
 class _SheetBullet extends StatelessWidget {
   final String text;
   final Color primary, muted;
   const _SheetBullet(this.text, this.primary, this.muted);
-
   @override
   Widget build(BuildContext context) {
     return Padding(
@@ -311,11 +298,8 @@ class _SheetBullet extends StatelessWidget {
               ),
             ),
           ),
-          Expanded(
-            child: Text(text,
-                style: GoogleFonts.dmSans(
-                    fontSize: 13, color: primary)),
-          ),
+          Expanded(child: Text(text,
+              style: GoogleFonts.dmSans(fontSize: 13, color: primary))),
         ],
       ),
     );

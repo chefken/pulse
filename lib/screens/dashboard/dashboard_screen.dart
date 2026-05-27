@@ -26,7 +26,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
     final tasks  = context.read<TaskProvider>();
     final score  = context.read<ScoreProvider>();
     final streak = context.read<StreakProvider>();
-
     score.updateTodayScore(
       earned: tasks.earnedPoints,
       total:  tasks.totalPoints,
@@ -62,10 +61,10 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final tasks  = context.watch<TaskProvider>();
-    final score  = context.watch<ScoreProvider>();
-    final streak = context.watch<StreakProvider>();
-    final isDark = context.watch<ThemeProvider>().isDark;
+    final tasks   = context.watch<TaskProvider>();
+    final score   = context.watch<ScoreProvider>();
+    final streak  = context.watch<StreakProvider>();
+    final isDark  = context.watch<ThemeProvider>().isDark;
 
     final bg       = AppColors.bg(context);
     final surface  = AppColors.surface(context);
@@ -76,8 +75,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
     final today     = tasks.todayTasks;
     final habits    = today.where((t) => t.type == TaskType.habit).toList();
-    final oneTimers =
-        today.where((t) => t.type == TaskType.oneTime).toList();
+    final oneTimers = today.where((t) => t.type == TaskType.oneTime).toList();
     final completed = tasks.completedToday.length;
     final total     = today.length;
 
@@ -90,7 +88,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
               parent: AlwaysScrollableScrollPhysics()),
           slivers: [
 
-            // Header
+            // ── Header ──────────────────────────────────────
             SliverToBoxAdapter(
               child: Padding(
                 padding: const EdgeInsets.fromLTRB(24, 20, 24, 0),
@@ -104,26 +102,19 @@ class _DashboardScreenState extends State<DashboardScreen> {
                             PulseDateUtils.formatDisplay(DateTime.now())
                                 .toUpperCase(),
                             style: GoogleFonts.dmSans(
-                              fontSize: 10,
-                              fontWeight: FontWeight.w500,
-                              color: muted,
-                              letterSpacing: 1.2,
+                              fontSize: 10, fontWeight: FontWeight.w500,
+                              color: muted, letterSpacing: 1.2,
                             ),
                           ),
                           const SizedBox(height: 3),
-                          Text(
-                            PulseDateUtils.greeting(),
-                            style: GoogleFonts.dmSans(
-                              fontSize: 20,
-                              fontWeight: FontWeight.w600,
-                              color: primary,
-                              letterSpacing: -0.4,
-                            ),
-                          ),
+                          Text(PulseDateUtils.greeting(),
+                              style: GoogleFonts.dmSans(
+                                fontSize: 20, fontWeight: FontWeight.w600,
+                                color: primary, letterSpacing: -0.4,
+                              )),
                         ],
                       ),
                     ),
-                    // Streak
                     Container(
                       padding: const EdgeInsets.symmetric(
                           horizontal: 12, vertical: 7),
@@ -138,14 +129,11 @@ class _DashboardScreenState extends State<DashboardScreen> {
                           const Text('🔥',
                               style: TextStyle(fontSize: 14)),
                           const SizedBox(width: 5),
-                          Text(
-                            '${streak.currentStreak}',
-                            style: GoogleFonts.dmSans(
-                              fontSize: 14,
-                              fontWeight: FontWeight.w700,
-                              color: primary,
-                            ),
-                          ),
+                          Text('${streak.currentStreak}',
+                              style: GoogleFonts.dmSans(
+                                fontSize: 14, fontWeight: FontWeight.w700,
+                                color: primary,
+                              )),
                         ],
                       ),
                     ),
@@ -156,7 +144,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
               ),
             ),
 
-            // Discipline ring
+            // ── Discipline ring ──────────────────────────────
             SliverToBoxAdapter(
               child: Padding(
                 padding: const EdgeInsets.fromLTRB(24, 24, 24, 0),
@@ -170,7 +158,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
               ),
             ),
 
-            // Week tracker
+            // ── Week tracker ─────────────────────────────────
             SliverToBoxAdapter(
               child: Padding(
                 padding: const EdgeInsets.fromLTRB(24, 16, 24, 0),
@@ -180,7 +168,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
             const SliverToBoxAdapter(child: SizedBox(height: 30)),
 
-            // Habits section
+            // ── Habits (reorderable) ─────────────────────────
             SliverToBoxAdapter(
               child: Padding(
                 padding: const EdgeInsets.fromLTRB(24, 0, 24, 12),
@@ -193,6 +181,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 ),
               ),
             ),
+
             habits.isEmpty
                 ? SliverToBoxAdapter(
                     child: _EmptyHint(
@@ -204,36 +193,44 @@ class _DashboardScreenState extends State<DashboardScreen> {
                   )
                 : SliverPadding(
                     padding: const EdgeInsets.symmetric(horizontal: 24),
-                    sliver: SliverList(
-                      delegate: SliverChildBuilderDelegate(
-                        (_, i) => TaskTile(
-                          key: ValueKey(habits[i].id),
-                          task: habits[i],
-                          onToggle: () {
-                            tasks.toggleTask(habits[i].id);
-                            WidgetsBinding.instance
-                                .addPostFrameCallback((_) => _sync());
-                          },
-                          onSkip: () {
-                            HapticFeedback.lightImpact();
-                            tasks.skipToday(habits[i].id);
-                            WidgetsBinding.instance
-                                .addPostFrameCallback((_) => _sync());
-                          },
-                          onDelete: () {
-                            tasks.deleteTask(habits[i].id);
-                            WidgetsBinding.instance
-                                .addPostFrameCallback((_) => _sync());
-                          },
-                        ),
-                        childCount: habits.length,
-                      ),
+                    sliver: SliverReorderableList(
+                      itemCount: habits.length,
+                      onReorder: (oldIndex, newIndex) {
+                        HapticFeedback.mediumImpact();
+                        tasks.reorderTasks(habits, oldIndex, newIndex);
+                      },
+                      itemBuilder: (_, i) {
+                        final task = habits[i];
+                        return ReorderableDelayedDragStartListener(
+                          key: ValueKey(task.id),
+                          index: i,
+                          child: TaskTile(
+                            task: task,
+                            onToggle: () {
+                              tasks.toggleTask(task.id);
+                              WidgetsBinding.instance
+                                  .addPostFrameCallback((_) => _sync());
+                            },
+                            onSkip: () {
+                              HapticFeedback.lightImpact();
+                              tasks.skipToday(task.id);
+                              WidgetsBinding.instance
+                                  .addPostFrameCallback((_) => _sync());
+                            },
+                            onDelete: () {
+                              tasks.deleteTask(task.id);
+                              WidgetsBinding.instance
+                                  .addPostFrameCallback((_) => _sync());
+                            },
+                          ),
+                        );
+                      },
                     ),
                   ),
 
             const SliverToBoxAdapter(child: SizedBox(height: 28)),
 
-            // Today tasks
+            // ── Today tasks (reorderable) ────────────────────
             SliverToBoxAdapter(
               child: Padding(
                 padding: const EdgeInsets.fromLTRB(24, 0, 24, 12),
@@ -246,6 +243,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 ),
               ),
             ),
+
             oneTimers.isEmpty
                 ? SliverToBoxAdapter(
                     child: _EmptyHint(
@@ -257,28 +255,36 @@ class _DashboardScreenState extends State<DashboardScreen> {
                   )
                 : SliverPadding(
                     padding: const EdgeInsets.symmetric(horizontal: 24),
-                    sliver: SliverList(
-                      delegate: SliverChildBuilderDelegate(
-                        (_, i) => TaskTile(
-                          key: ValueKey(oneTimers[i].id),
-                          task: oneTimers[i],
-                          onToggle: () {
-                            tasks.toggleTask(oneTimers[i].id);
-                            WidgetsBinding.instance
-                                .addPostFrameCallback((_) => _sync());
-                          },
-                          onDelete: () {
-                            tasks.deleteTask(oneTimers[i].id);
-                            WidgetsBinding.instance
-                                .addPostFrameCallback((_) => _sync());
-                          },
-                        ),
-                        childCount: oneTimers.length,
-                      ),
+                    sliver: SliverReorderableList(
+                      itemCount: oneTimers.length,
+                      onReorder: (oldIndex, newIndex) {
+                        HapticFeedback.mediumImpact();
+                        tasks.reorderTasks(
+                            oneTimers, oldIndex, newIndex);
+                      },
+                      itemBuilder: (_, i) {
+                        final task = oneTimers[i];
+                        return ReorderableDelayedDragStartListener(
+                          key: ValueKey(task.id),
+                          index: i,
+                          child: TaskTile(
+                            task: task,
+                            onToggle: () {
+                              tasks.toggleTask(task.id);
+                              WidgetsBinding.instance
+                                  .addPostFrameCallback((_) => _sync());
+                            },
+                            onDelete: () {
+                              tasks.deleteTask(task.id);
+                              WidgetsBinding.instance
+                                  .addPostFrameCallback((_) => _sync());
+                            },
+                          ),
+                        );
+                      },
                     ),
                   ),
 
-            // Space for floating nav
             const SliverToBoxAdapter(child: SizedBox(height: 110)),
           ],
         ),
@@ -286,6 +292,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
     );
   }
 }
+
+// ── helpers (unchanged) ──────────────────────────────────────
 
 class _ThemeToggle extends StatelessWidget {
   final bool isDark;
@@ -314,15 +322,14 @@ class _ThemeToggle extends StatelessWidget {
         child: AnimatedAlign(
           duration: const Duration(milliseconds: 280),
           curve: Curves.easeInOutCubic,
-          alignment: isDark
-              ? Alignment.centerRight
-              : Alignment.centerLeft,
+          alignment:
+              isDark ? Alignment.centerRight : Alignment.centerLeft,
           child: Padding(
             padding: const EdgeInsets.all(3),
             child: Container(
               width: 16, height: 16,
-              decoration: BoxDecoration(
-                  color: primary, shape: BoxShape.circle),
+              decoration:
+                  BoxDecoration(color: primary, shape: BoxShape.circle),
               child: Icon(
                 isDark
                     ? Icons.dark_mode_rounded
@@ -374,8 +381,7 @@ class _SectionLabel extends StatelessWidget {
                 const SizedBox(width: 3),
                 Text('Add',
                     style: GoogleFonts.dmSans(
-                      fontSize: 11,
-                      fontWeight: FontWeight.w600,
+                      fontSize: 11, fontWeight: FontWeight.w600,
                       color: bg,
                     )),
               ],
@@ -409,9 +415,7 @@ class _EmptyHint extends StatelessWidget {
         ),
         child: Center(
           child: Text(text,
-              style: GoogleFonts.dmSans(
-                fontSize: 13, color: muted,
-              )),
+              style: GoogleFonts.dmSans(fontSize: 13, color: muted)),
         ),
       ),
     );

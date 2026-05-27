@@ -100,4 +100,27 @@ class TaskProvider extends ChangeNotifier {
     _tasks = _box!.values.toList();
     notifyListeners();
   }
+
+  /// Reorders tasks within a section.
+  ///
+  /// [section] is the ordered list currently shown (habits or oneTimers).
+  /// [oldIndex] / [newIndex] come directly from ReorderableListView.
+  /// We splice the moved item into [_tasks] at the correct position.
+  void reorderTasks(List<Task> section, int oldIndex, int newIndex) {
+    if (oldIndex == newIndex) return;
+    if (newIndex > oldIndex) newIndex -= 1;
+
+    // Find absolute indices in _tasks
+    final movedId   = section[oldIndex].id;
+    final targetId  = section[newIndex].id;
+
+    final fromIdx = _tasks.indexWhere((t) => t.id == movedId);
+    final toIdx   = _tasks.indexWhere((t) => t.id == targetId);
+    if (fromIdx == -1 || toIdx == -1) return;
+
+    final item = _tasks.removeAt(fromIdx);
+    _tasks.insert(toIdx, item);
+
+    notifyListeners(); // persists visual order; Hive key order is insertion-based
+  }
 }
