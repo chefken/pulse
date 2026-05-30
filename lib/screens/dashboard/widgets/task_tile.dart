@@ -8,6 +8,7 @@ class TaskTile extends StatefulWidget {
   final Task task;
   final VoidCallback onToggle;
   final VoidCallback? onDelete;
+  // onSkip kept in signature for backward compat but no longer renders an icon
   final VoidCallback? onSkip;
 
   const TaskTile({
@@ -26,30 +27,24 @@ class _TaskTileState extends State<TaskTile>
     with SingleTickerProviderStateMixin {
   late final AnimationController _ctrl;
   late final Animation<double> _scale;
-
-  // Optimistic local state — flips instantly on tap so the
-  // UI never waits for the provider/Hive round-trip.
   late bool _localDone;
 
   @override
   void initState() {
     super.initState();
     _localDone = widget.task.isCompleted;
-    _ctrl = AnimationController(
-      vsync: this,
-      duration: const Duration(milliseconds: 100),
-      reverseDuration: const Duration(milliseconds: 80),
-    );
-    _scale = Tween<double>(begin: 1.0, end: 0.97).animate(
-        CurvedAnimation(parent: _ctrl, curve: Curves.easeInOut));
+    _ctrl  = AnimationController(
+        vsync: this,
+        duration: const Duration(milliseconds: 100),
+        reverseDuration: const Duration(milliseconds: 80));
+    _scale = Tween<double>(begin: 1.0, end: 0.97)
+        .animate(CurvedAnimation(parent: _ctrl, curve: Curves.easeInOut));
   }
 
-  // Keep local state in sync if the parent rebuilds the tile
-  // (e.g. after a full provider refresh) without a tap.
   @override
-  void didUpdateWidget(TaskTile oldWidget) {
-    super.didUpdateWidget(oldWidget);
-    if (oldWidget.task.isCompleted != widget.task.isCompleted) {
+  void didUpdateWidget(TaskTile old) {
+    super.didUpdateWidget(old);
+    if (old.task.isCompleted != widget.task.isCompleted) {
       _localDone = widget.task.isCompleted;
     }
   }
@@ -62,11 +57,8 @@ class _TaskTileState extends State<TaskTile>
 
   void _tap() {
     HapticFeedback.lightImpact();
-    // 1. Flip local state instantly — zero lag
     setState(() => _localDone = !_localDone);
-    // 2. Brief scale animation (non-blocking)
     _ctrl.forward().then((_) => _ctrl.reverse());
-    // 3. Persist async — does not gate the visual update
     widget.onToggle();
   }
 
@@ -91,9 +83,8 @@ class _TaskTileState extends State<TaskTile>
           padding: const EdgeInsets.symmetric(
               horizontal: 16, vertical: 13),
           decoration: BoxDecoration(
-            color: _localDone
-                ? primary.withOpacity(0.05)
-                : surface,
+            color:
+                _localDone ? primary.withOpacity(0.05) : surface,
             borderRadius: BorderRadius.circular(16),
             border: Border.all(
               color: _localDone
@@ -104,15 +95,13 @@ class _TaskTileState extends State<TaskTile>
           ),
           child: Row(
             children: [
-              // Checkbox — driven by _localDone, not task.isCompleted
+              // Checkbox
               AnimatedContainer(
                 duration: const Duration(milliseconds: 160),
-                width: 21,
-                height: 21,
+                width: 21, height: 21,
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
-                  color:
-                      _localDone ? primary : Colors.transparent,
+                  color: _localDone ? primary : Colors.transparent,
                   border: Border.all(
                     color: _localDone
                         ? primary
@@ -121,8 +110,7 @@ class _TaskTileState extends State<TaskTile>
                   ),
                 ),
                 child: _localDone
-                    ? Icon(Icons.check_rounded,
-                        size: 12, color: bg)
+                    ? Icon(Icons.check_rounded, size: 12, color: bg)
                     : null,
               ),
 
@@ -156,48 +144,22 @@ class _TaskTileState extends State<TaskTile>
                 ),
               ),
 
-              if (widget.task.type == TaskType.habit &&
-                  widget.onSkip != null)
-                _IconBtn(
-                  icon: Icons.arrow_forward_rounded,
-                  color: muted,
-                  onTap: widget.onSkip!,
-                ),
+              // Only delete icon — skip arrow removed
               if (widget.onDelete != null)
-                _IconBtn(
-                  icon: Icons.close_rounded,
-                  color: muted,
-                  onTap: widget.onDelete!,
+                GestureDetector(
+                  onTap: () {
+                    HapticFeedback.lightImpact();
+                    widget.onDelete!();
+                  },
+                  child: Padding(
+                    padding: const EdgeInsets.only(left: 10),
+                    child: Icon(Icons.close_rounded,
+                        size: 17, color: muted),
+                  ),
                 ),
             ],
           ),
         ),
-      ),
-    );
-  }
-}
-
-class _IconBtn extends StatelessWidget {
-  final IconData icon;
-  final Color color;
-  final VoidCallback onTap;
-
-  const _IconBtn({
-    required this.icon,
-    required this.color,
-    required this.onTap,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: () {
-        HapticFeedback.lightImpact();
-        onTap();
-      },
-      child: Padding(
-        padding: const EdgeInsets.only(left: 10),
-        child: Icon(icon, size: 17, color: color),
       ),
     );
   }

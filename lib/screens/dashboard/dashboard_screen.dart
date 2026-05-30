@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/utils/date_utils.dart';
@@ -13,6 +14,7 @@ import 'widgets/discipline_ring.dart';
 import 'widgets/task_tile.dart';
 import 'widgets/week_tracker.dart';
 import 'widgets/add_task_sheet.dart';
+import 'widgets/home_calendar.dart';
 
 class DashboardScreen extends StatefulWidget {
   const DashboardScreen({super.key});
@@ -49,14 +51,24 @@ class _DashboardScreenState extends State<DashboardScreen> {
     WidgetsBinding.instance.addPostFrameCallback((_) => _sync());
   }
 
-  void _openAdd() {
+  // Open sheet with correct default type per section
+  void _openAdd({required TaskType defaultType}) {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
-      builder: (_) => const AddTaskSheet(),
+      builder: (_) => AddTaskSheet(defaultType: defaultType),
     ).then((_) =>
         WidgetsBinding.instance.addPostFrameCallback((_) => _sync()));
+  }
+
+  void _openCalendar() {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (_) => const HomeCalendarSheet(),
+    );
   }
 
   @override
@@ -115,6 +127,25 @@ class _DashboardScreenState extends State<DashboardScreen> {
                         ],
                       ),
                     ),
+
+                    // ── Calendar icon ────────────────────────
+                    GestureDetector(
+                      onTap: _openCalendar,
+                      child: Container(
+                        width: 36, height: 36,
+                        decoration: BoxDecoration(
+                          color: surfHigh,
+                          shape: BoxShape.circle,
+                          border: Border.all(color: border, width: 0.5),
+                        ),
+                        child: Icon(Icons.calendar_month_outlined,
+                            size: 17, color: primary),
+                      ),
+                    ),
+
+                    const SizedBox(width: 8),
+
+                    // ── Streak pill ──────────────────────────
                     Container(
                       padding: const EdgeInsets.symmetric(
                           horizontal: 12, vertical: 7),
@@ -137,7 +168,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
                         ],
                       ),
                     ),
-                    const SizedBox(width: 10),
+
+                    const SizedBox(width: 8),
                     _ThemeToggle(isDark: isDark),
                   ],
                 ),
@@ -177,7 +209,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
                   primary: primary,
                   muted: muted,
                   bg: bg,
-                  onAdd: _openAdd,
+                  // habits section → default Daily habit
+                  onAdd: () => _openAdd(defaultType: TaskType.habit),
                 ),
               ),
             ),
@@ -211,12 +244,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                               WidgetsBinding.instance
                                   .addPostFrameCallback((_) => _sync());
                             },
-                            onSkip: () {
-                              HapticFeedback.lightImpact();
-                              tasks.skipToday(task.id);
-                              WidgetsBinding.instance
-                                  .addPostFrameCallback((_) => _sync());
-                            },
+                            // No skip arrow
                             onDelete: () {
                               tasks.deleteTask(task.id);
                               WidgetsBinding.instance
@@ -239,7 +267,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
                   primary: primary,
                   muted: muted,
                   bg: bg,
-                  onAdd: _openAdd,
+                  // today section → default One-time
+                  onAdd: () => _openAdd(defaultType: TaskType.oneTime),
                 ),
               ),
             ),
@@ -259,8 +288,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                       itemCount: oneTimers.length,
                       onReorder: (oldIndex, newIndex) {
                         HapticFeedback.mediumImpact();
-                        tasks.reorderTasks(
-                            oneTimers, oldIndex, newIndex);
+                        tasks.reorderTasks(oneTimers, oldIndex, newIndex);
                       },
                       itemBuilder: (_, i) {
                         final task = oneTimers[i];
@@ -293,7 +321,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
   }
 }
 
-// ── helpers (unchanged) ──────────────────────────────────────
+// ── helpers ──────────────────────────────────────────────────
 
 class _ThemeToggle extends StatelessWidget {
   final bool isDark;
@@ -328,14 +356,13 @@ class _ThemeToggle extends StatelessWidget {
             padding: const EdgeInsets.all(3),
             child: Container(
               width: 16, height: 16,
-              decoration:
-                  BoxDecoration(color: primary, shape: BoxShape.circle),
+              decoration: BoxDecoration(
+                  color: primary, shape: BoxShape.circle),
               child: Icon(
                 isDark
                     ? Icons.dark_mode_rounded
                     : Icons.light_mode_rounded,
-                size: 9,
-                color: bg,
+                size: 9, color: bg,
               ),
             ),
           ),

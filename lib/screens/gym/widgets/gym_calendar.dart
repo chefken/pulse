@@ -74,10 +74,9 @@ class _GymCalendarState extends State<GymCalendar>
     final border  = AppColors.border(context);
     final dot     = AppColors.dot(context);
 
-    // Sunday-first grid offset
     final firstDay    = DateTime(_month.year, _month.month, 1);
     final daysInMonth = DateTime(_month.year, _month.month + 1, 0).day;
-    final startOffset = firstDay.weekday % 7; // Sun=0…Sat=6
+    final startOffset = firstDay.weekday % 7;
 
     final today = PulseDateUtils.today;
     const hdrs  = ['S', 'M', 'T', 'W', 'T', 'F', 'S'];
@@ -234,7 +233,7 @@ class _GymCalendarState extends State<GymCalendar>
       context: context,
       backgroundColor: Colors.transparent,
       isScrollControlled: true,
-      builder: (_) => _DaySheet(
+      builder: (_) => _GymDaySheet(
         date: date,
         log: log,
         moodRating: moodRating,
@@ -250,16 +249,17 @@ class _GymCalendarState extends State<GymCalendar>
 }
 
 // ─────────────────────────────────────────────────────────────
-// Day sheet
+// Gym day sheet
+// Fixed top, scrollable body, compact exercise rows
 // ─────────────────────────────────────────────────────────────
-class _DaySheet extends StatelessWidget {
+class _GymDaySheet extends StatelessWidget {
   final DateTime date;
   final dynamic log;
   final int moodRating;
   final int? disciplinePercent;
   final Color primary, muted, bg, border, surface;
 
-  const _DaySheet({
+  const _GymDaySheet({
     required this.date,
     required this.log,
     required this.moodRating,
@@ -276,171 +276,192 @@ class _DaySheet extends StatelessWidget {
     final exercises = log?.exercises as List? ?? [];
     final hasWorkout = exercises.isNotEmpty;
 
+    // Format: "5 August" then "Monday" on next line
+    final dateLine = DateFormat('d MMMM').format(date);
+    final dayLine  = DateFormat('EEEE').format(date);
+
     return Container(
+      // Fixed max height — always the same regardless of content
+      constraints: BoxConstraints(
+        maxHeight: MediaQuery.of(context).size.height * 0.60,
+      ),
       margin: const EdgeInsets.fromLTRB(12, 0, 12, 12),
-      padding: const EdgeInsets.fromLTRB(24, 8, 24, 32),
       decoration: BoxDecoration(
         color: bg,
         borderRadius: BorderRadius.circular(28),
         border: Border.all(color: border, width: 0.5),
       ),
-      // Scrollable in case many exercises
-      child: SingleChildScrollView(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // Handle
-            Center(
-              child: Container(
-                width: 32, height: 3,
-                margin: const EdgeInsets.only(top: 12, bottom: 22),
-                decoration: BoxDecoration(
-                    color: border,
-                    borderRadius: BorderRadius.circular(2)),
-              ),
-            ),
-
-            // Date
-            Text(DateFormat('EEEE, d MMMM').format(date),
-                style: GoogleFonts.dmSans(
-                  fontSize: 17, fontWeight: FontWeight.w700,
-                  color: primary, letterSpacing: -0.4,
-                )),
-
-            const SizedBox(height: 20),
-
-            // Mood + Discipline side by side
-            Row(
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          // ── Fixed header — never scrolls ─────────────────
+          Padding(
+            padding: const EdgeInsets.fromLTRB(24, 8, 24, 0),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Expanded(
-                  child: _MetaCol(
-                    label: 'Mood',
-                    value: moodRating > 0 ? '$moodRating/10' : '—',
-                    primary: primary,
-                    muted: muted,
+                // Handle
+                Center(
+                  child: Container(
+                    width: 32, height: 3,
+                    margin:
+                        const EdgeInsets.only(top: 12, bottom: 18),
+                    decoration: BoxDecoration(
+                      color: border,
+                      borderRadius: BorderRadius.circular(2),
+                    ),
                   ),
                 ),
-                const SizedBox(width: 24),
-                Expanded(
-                  child: _MetaCol(
-                    label: 'Discipline',
-                    value: disciplinePercent != null
-                        ? '$disciplinePercent%'
-                        : '—',
-                    primary: primary,
-                    muted: muted,
-                  ),
+
+                // Date: "5 August" big, "Monday" small below
+                Text(dateLine,
+                    style: GoogleFonts.dmSans(
+                      fontSize: 20, fontWeight: FontWeight.w700,
+                      color: primary, letterSpacing: -0.5,
+                    )),
+                const SizedBox(height: 2),
+                Text(dayLine,
+                    style: GoogleFonts.dmSans(
+                      fontSize: 12, color: muted,
+                    )),
+
+                const SizedBox(height: 16),
+
+                // Mood + Discipline row
+                Row(
+                  children: [
+                    Expanded(
+                      child: _Stat(
+                        label: 'Mood',
+                        value: moodRating > 0
+                            ? '$moodRating/10'
+                            : '—',
+                        primary: primary, muted: muted,
+                      ),
+                    ),
+                    Expanded(
+                      child: _Stat(
+                        label: 'Discipline',
+                        value: disciplinePercent != null
+                            ? '$disciplinePercent%'
+                            : '—',
+                        primary: primary, muted: muted,
+                      ),
+                    ),
+                  ],
                 ),
+
+                const SizedBox(height: 14),
+                Container(height: 0.5, color: border),
+                const SizedBox(height: 4),
               ],
             ),
+          ),
 
-            // Workout section
-            if (!hasWorkout) ...[
-              const SizedBox(height: 22),
-              Text('No workout logged.',
-                  style: GoogleFonts.dmSans(
-                      fontSize: 14, color: muted)),
-            ] else ...[
-              const SizedBox(height: 20),
-              Container(height: 0.5, color: border),
-              const SizedBox(height: 16),
-
-              // Exercise cards with sets + weights
-              ...exercises.map<Widget>((ex) {
-                final sets = ex.sets as List;
-                return Padding(
-                  padding: const EdgeInsets.only(bottom: 16),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      // Exercise name
-                      Text(ex.name as String,
+          // ── Scrollable body ──────────────────────────────
+          Flexible(
+            child: !hasWorkout
+                ? Padding(
+                    padding: const EdgeInsets.fromLTRB(24, 12, 24, 24),
+                    child: Align(
+                      alignment: Alignment.centerLeft,
+                      child: Text('No workout logged.',
                           style: GoogleFonts.dmSans(
-                            fontSize: 14,
-                            fontWeight: FontWeight.w600,
-                            color: primary,
-                          )),
-                      const SizedBox(height: 6),
+                              fontSize: 13, color: muted)),
+                    ),
+                  )
+                : ListView(
+                    padding:
+                        const EdgeInsets.fromLTRB(24, 12, 24, 28),
+                    children: exercises.map<Widget>((ex) {
+                      final sets   = ex.sets as List;
+                      final name   = ex.name as String;
 
-                      // Set rows: SET · WEIGHT · REPS
-                      if (sets.isEmpty)
-                        Text('No sets logged.',
-                            style: GoogleFonts.dmSans(
-                                fontSize: 12, color: muted))
-                      else
-                        ...sets.asMap().entries.map<Widget>((e) {
-                          final idx = e.key + 1;
-                          final s   = e.value;
-                          final w   = s.weight as double;
-                          final r   = s.reps as int;
-                          final wStr = w % 1 == 0
-                              ? '${w.toInt()} kg'
-                              : '$w kg';
+                      return Padding(
+                        padding: const EdgeInsets.only(bottom: 14),
+                        child: Column(
+                          crossAxisAlignment:
+                              CrossAxisAlignment.start,
+                          children: [
+                            // Exercise name
+                            Text(name,
+                                style: GoogleFonts.dmSans(
+                                  fontSize: 13,
+                                  fontWeight: FontWeight.w600,
+                                  color: primary,
+                                )),
+                            const SizedBox(height: 5),
 
-                          return Padding(
-                            padding: const EdgeInsets.only(bottom: 4),
-                            child: Row(
-                              children: [
-                                // Set badge
-                                Container(
-                                  width: 22, height: 22,
-                                  decoration: BoxDecoration(
-                                    shape: BoxShape.circle,
-                                    color:
-                                        primary.withOpacity(0.08),
+                            if (sets.isEmpty)
+                              Text('No sets logged.',
+                                  style: GoogleFonts.dmSans(
+                                      fontSize: 11, color: muted))
+                            else
+                              // Compact set rows
+                              ...sets.asMap().entries.map<Widget>((e) {
+                                final idx  = e.key + 1;
+                                final s    = e.value;
+                                final w    = s.weight as double;
+                                final r    = s.reps as int;
+                                final wStr = w % 1 == 0
+                                    ? '${w.toInt()}kg'
+                                    : '${w}kg';
+
+                                return Padding(
+                                  padding: const EdgeInsets.only(
+                                      bottom: 4),
+                                  child: Row(
+                                    children: [
+                                      // Set number
+                                      SizedBox(
+                                        width: 20,
+                                        child: Text('$idx',
+                                            style: GoogleFonts.dmSans(
+                                              fontSize: 11,
+                                              color: muted,
+                                            )),
+                                      ),
+                                      // Weight
+                                      Text(wStr,
+                                          style: GoogleFonts.dmSans(
+                                            fontSize: 12,
+                                            fontWeight: FontWeight.w500,
+                                            color: primary,
+                                          )),
+                                      const SizedBox(width: 6),
+                                      Text('·',
+                                          style: GoogleFonts.dmSans(
+                                            fontSize: 12, color: muted,
+                                          )),
+                                      const SizedBox(width: 6),
+                                      // Reps
+                                      Text('$r reps',
+                                          style: GoogleFonts.dmSans(
+                                            fontSize: 12, color: muted,
+                                          )),
+                                    ],
                                   ),
-                                  child: Center(
-                                    child: Text('$idx',
-                                        style: GoogleFonts.dmSans(
-                                          fontSize: 10,
-                                          fontWeight: FontWeight.w700,
-                                          color: primary,
-                                        )),
-                                  ),
-                                ),
-                                const SizedBox(width: 10),
-                                // Weight
-                                Expanded(
-                                  child: Text(wStr,
-                                      style: GoogleFonts.dmSans(
-                                        fontSize: 13,
-                                        color: primary,
-                                      )),
-                                ),
-                                // Reps
-                                Text('$r reps',
-                                    style: GoogleFonts.dmSans(
-                                      fontSize: 13,
-                                      color: muted,
-                                    )),
-                              ],
-                            ),
-                          );
-                        }),
-                    ],
+                                );
+                              }),
+                          ],
+                        ),
+                      );
+                    }).toList(),
                   ),
-                );
-              }),
-            ],
-
-            const SizedBox(height: 4),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }
 }
 
-class _MetaCol extends StatelessWidget {
+class _Stat extends StatelessWidget {
   final String label, value;
   final Color primary, muted;
-
-  const _MetaCol({
+  const _Stat({
     required this.label, required this.value,
     required this.primary, required this.muted,
   });
-
   @override
   Widget build(BuildContext context) {
     return Column(
@@ -451,11 +472,11 @@ class _MetaCol extends StatelessWidget {
               fontSize: 9, fontWeight: FontWeight.w600,
               color: muted, letterSpacing: 1.4,
             )),
-        const SizedBox(height: 4),
+        const SizedBox(height: 3),
         Text(value,
             style: GoogleFonts.dmSans(
-              fontSize: 18, fontWeight: FontWeight.w700,
-              color: primary, letterSpacing: -0.5,
+              fontSize: 15, fontWeight: FontWeight.w700,
+              color: primary,
             )),
       ],
     );

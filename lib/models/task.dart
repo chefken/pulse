@@ -18,15 +18,16 @@ enum TaskType {
 
 @HiveType(typeId: 2)
 class Task extends HiveObject {
-  @HiveField(0) String id;
-  @HiveField(1) String title;
-  @HiveField(2) TaskPriority priority;
-  @HiveField(3) TaskType type;
-  @HiveField(4) bool isCompleted;
-  @HiveField(5) DateTime createdAt;
-  @HiveField(6) String dateKey;
-  @HiveField(7) List<String> skippedDates;
-  @HiveField(8) List<String> completedDates;
+  @HiveField(0)  String id;
+  @HiveField(1)  String title;
+  @HiveField(2)  TaskPriority priority;
+  @HiveField(3)  TaskType type;
+  @HiveField(4)  bool isCompleted;
+  @HiveField(5)  DateTime createdAt;
+  @HiveField(6)  String dateKey;
+  @HiveField(7)  List<String> skippedDates;
+  @HiveField(8)  List<String> completedDates;
+  @HiveField(9)  int sortOrder; // persisted reorder position
 
   Task({
     required this.id,
@@ -34,12 +35,13 @@ class Task extends HiveObject {
     required this.priority,
     required this.type,
     required this.dateKey,
-    this.isCompleted = false,
+    this.isCompleted    = false,
     DateTime? createdAt,
     List<String>? skippedDates,
     List<String>? completedDates,
-  })  : createdAt = createdAt ?? DateTime.now(),
-        skippedDates = skippedDates ?? [],
+    this.sortOrder      = 0,
+  })  : createdAt      = createdAt ?? DateTime.now(),
+        skippedDates   = skippedDates  ?? [],
         completedDates = completedDates ?? [];
 
   factory Task.create({
@@ -47,13 +49,15 @@ class Task extends HiveObject {
     required TaskPriority priority,
     required TaskType type,
     required String dateKey,
+    int sortOrder = 0,
   }) =>
       Task(
-        id: const Uuid().v4(),
-        title: title,
-        priority: priority,
-        type: type,
-        dateKey: dateKey,
+        id:         const Uuid().v4(),
+        title:      title,
+        priority:   priority,
+        type:       type,
+        dateKey:    dateKey,
+        sortOrder:  sortOrder,
       );
 
   int get points {

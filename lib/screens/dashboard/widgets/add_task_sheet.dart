@@ -8,16 +8,31 @@ import '../../../models/task.dart';
 import '../../../providers/task_provider.dart';
 
 class AddTaskSheet extends StatefulWidget {
-  const AddTaskSheet({super.key});
+  /// Pass [defaultType] from the calling section:
+  ///   habits section  → TaskType.habit
+  ///   today section   → TaskType.oneTime
+  final TaskType defaultType;
+
+  const AddTaskSheet({
+    super.key,
+    this.defaultType = TaskType.habit,
+  });
 
   @override
   State<AddTaskSheet> createState() => _AddTaskSheetState();
 }
 
 class _AddTaskSheetState extends State<AddTaskSheet> {
-  final _ctrl    = TextEditingController();
-  TaskPriority _priority = TaskPriority.medium;
-  TaskType     _type     = TaskType.oneTime;
+  final _ctrl = TextEditingController();
+  late TaskPriority _priority;
+  late TaskType     _type;
+
+  @override
+  void initState() {
+    super.initState();
+    _priority = TaskPriority.medium;
+    _type     = widget.defaultType; // ← correct default
+  }
 
   @override
   void dispose() {
@@ -30,10 +45,10 @@ class _AddTaskSheetState extends State<AddTaskSheet> {
     if (title.isEmpty) return;
     HapticFeedback.mediumImpact();
     context.read<TaskProvider>().addTask(Task.create(
-      title: title,
+      title:    title,
       priority: _priority,
-      type: _type,
-      dateKey: PulseDateUtils.formatDateKey(PulseDateUtils.today),
+      type:     _type,
+      dateKey:  PulseDateUtils.formatDateKey(PulseDateUtils.today),
     ));
     Navigator.pop(context);
   }
@@ -59,12 +74,13 @@ class _AddTaskSheetState extends State<AddTaskSheet> {
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Center(child: Container(
-            width: 32, height: 3,
-            decoration: BoxDecoration(
-                color: border,
-                borderRadius: BorderRadius.circular(2)),
-          )),
+          Center(
+            child: Container(
+              width: 32, height: 3,
+              decoration: BoxDecoration(
+                color: border, borderRadius: BorderRadius.circular(2)),
+            ),
+          ),
           const SizedBox(height: 22),
           Text('New task',
               style: GoogleFonts.dmSans(
@@ -80,8 +96,7 @@ class _AddTaskSheetState extends State<AddTaskSheet> {
             cursorColor: primary,
             decoration: InputDecoration(
               hintText: 'What needs to get done?',
-              hintStyle:
-                  GoogleFonts.dmSans(fontSize: 14, color: muted),
+              hintStyle: GoogleFonts.dmSans(fontSize: 14, color: muted),
               filled: true, fillColor: surfHi,
               border: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(14),
@@ -121,8 +136,7 @@ class _AddTaskSheetState extends State<AddTaskSheet> {
             const SizedBox(width: 8),
             _Chip('Medium', _priority == TaskPriority.medium,
                 primary, muted, surfHi, border,
-                () => setState(
-                    () => _priority = TaskPriority.medium)),
+                () => setState(() => _priority = TaskPriority.medium)),
             const SizedBox(width: 8),
             _Chip('High', _priority == TaskPriority.high,
                 primary, muted, surfHi, border,
@@ -135,8 +149,7 @@ class _AddTaskSheetState extends State<AddTaskSheet> {
             child: GestureDetector(
               onTap: _submit,
               child: Container(
-                padding:
-                    const EdgeInsets.symmetric(vertical: 16),
+                padding: const EdgeInsets.symmetric(vertical: 16),
                 decoration: BoxDecoration(
                   color: primary,
                   borderRadius: BorderRadius.circular(14),
@@ -160,7 +173,6 @@ class _Label extends StatelessWidget {
   final String text;
   final Color muted;
   const _Label(this.text, this.muted);
-
   @override
   Widget build(BuildContext context) => Text(text,
       style: GoogleFonts.dmSans(
@@ -174,21 +186,16 @@ class _Chip extends StatelessWidget {
   final bool selected;
   final Color primary, muted, surfHigh, border;
   final VoidCallback onTap;
-
   const _Chip(this.label, this.selected, this.primary, this.muted,
       this.surfHigh, this.border, this.onTap);
 
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
-      onTap: () {
-        HapticFeedback.selectionClick();
-        onTap();
-      },
+      onTap: () { HapticFeedback.selectionClick(); onTap(); },
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 180),
-        padding: const EdgeInsets.symmetric(
-            horizontal: 14, vertical: 9),
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 9),
         decoration: BoxDecoration(
           color: selected ? primary.withOpacity(0.10) : surfHigh,
           borderRadius: BorderRadius.circular(10),
@@ -200,9 +207,7 @@ class _Chip extends StatelessWidget {
         child: Text(label,
             style: GoogleFonts.dmSans(
               fontSize: 13,
-              fontWeight: selected
-                  ? FontWeight.w600
-                  : FontWeight.w400,
+              fontWeight: selected ? FontWeight.w600 : FontWeight.w400,
               color: selected ? primary : muted,
             )),
       ),
